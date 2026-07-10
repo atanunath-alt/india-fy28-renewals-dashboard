@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>India FY28 Key Renewals — Product Risk Dashboard</title>
+<style>
+:root {
+  --surface:#fcfcfb;--page:#f0efec;--card:#ffffff;
+  --border:#e1e0d9;--text-1:#0b0b0b;--text-2:#52514e;
+  --text-muted:#898781;--grid:#e8e7e0;
+  --good:#0ca30c;--warning:#fab219;--critical:#d03b3b;
+  --blue:#2a78d6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--page);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text-1);font-size:13px;}
+.dash-header{background:#1a1a2e;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.dash-header h1{font-size:18px;font-weight:700;letter-spacing:-.3px;}
+.badge-india{background:#e34948;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;letter-spacing:.5px;}
+.dash-header .sub{color:#aaa;font-size:11px;margin-left:auto;}
+.tab-nav{background:var(--card);border-bottom:2px solid var(--border);display:flex;gap:0;padding:0 24px;overflow-x:auto;}
+.tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:12px 18px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-count{background:var(--grid);color:var(--text-2);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;}
+.tab-pane{display:none;padding:20px 24px;}
+.tab-pane.active{display:block;}
+
+/* Segment cards */
+.seg-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.seg-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;}
+.seg-header:hover{background:#f7f6f3;}
+.seg-pill{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.seg-name{font-weight:700;font-size:14px;flex:1;}
+.seg-atr{font-weight:700;font-size:14px;color:var(--blue);}
+.seg-count{color:var(--text-muted);font-size:12px;margin-left:4px;}
+.seg-norisk{font-size:11px;color:var(--good);font-weight:700;margin-left:8px;}
+.seg-chevron{color:var(--text-muted);font-size:12px;transition:transform .2s;flex-shrink:0;}
+.seg-card.open .seg-chevron{transform:rotate(180deg);}
+.seg-body{display:none;border-top:1px solid var(--border);}
+.seg-card.open .seg-body{display:block;}
+
+/* Stacked bar */
+.stacked-bar{display:flex;border-radius:4px;overflow:hidden;height:8px;width:100%;min-width:80px;}
+.bar-seg{position:relative;transition:opacity .15s;cursor:pointer;}
+.bar-seg:hover{opacity:.82;}
+.bar-label{position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:10px;color:#fff;font-weight:700;white-space:nowrap;pointer-events:none;}
+
+/* RAG badges */
+.rag-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;}
+.rag-badge.RED{background:#fde8e8;color:#d03b3b;}
+.rag-badge.AMBER{background:#fef5e0;color:#7a5800;}
+.rag-badge.GREEN{background:#e8f7f1;color:#006b40;}
+.rag-badge.NA{background:#f0efec;color:#898781;}
+
+/* Cloud chip */
+.cloud-chip{display:inline-block;font-size:9.5px;padding:2px 7px;border-radius:10px;color:#fff;font-weight:700;}
+
+/* Risk group */
+.risk-group{border-bottom:1px solid var(--grid);}
+.risk-group:last-child{border-bottom:none;}
+.risk-header{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;background:#fafaf8;user-select:none;}
+.risk-header:hover{background:#f3f2ef;}
+.risk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.risk-label{font-weight:600;font-size:12px;flex:1;}
+.risk-atr{font-weight:700;font-size:12px;}
+.risk-chevron{color:var(--text-muted);font-size:11px;transition:transform .2s;flex-shrink:0;}
+.risk-group.open .risk-chevron{transform:rotate(180deg);}
+.risk-body{display:none;}
+.risk-group.open .risk-body{display:block;}
+
+/* Account table */
+.acct-table{width:100%;border-collapse:collapse;font-size:12px;}
+.acct-table th{background:#f7f6f3;color:var(--text-muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.acct-table td{padding:7px 10px;border-bottom:1px solid var(--grid);vertical-align:middle;}
+.acct-table tr:last-child td{border-bottom:none;}
+.acct-table tr:hover td{background:#f9f8f5;}
+.acct-name{font-weight:600;color:var(--text-1);}
+.comment-cell{color:var(--text-2);max-width:220px;font-size:11px;}
+.shelf-high{color:#d03b3b;font-weight:700;}
+.shelf-med{color:#7a5800;font-weight:600;}
+
+/* KPI strip */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;}
+.kpi-tile{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+.kpi-val{font-size:22px;font-weight:700;color:var(--text-1);}
+.kpi-sub{font-size:11px;color:var(--text-2);margin-top:3px;}
+
+/* Section headings */
+.section-title{font-size:14px;font-weight:700;color:var(--text-1);margin:20px 0 10px;border-left:3px solid var(--blue);padding-left:10px;}
+
+/* Portfolio bar */
+.portfolio-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+.portfolio-bar{display:flex;height:28px;border-radius:6px;overflow:hidden;margin:10px 0;}
+.pb-seg{cursor:pointer;transition:opacity .15s;position:relative;}
+.pb-seg:hover{opacity:.82;}
+.legend-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.legend-chip{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* Cloud health cards */
+.cloud-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:18px;}
+.cloud-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.cloud-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cloud-atr{font-size:16px;font-weight:700;}
+.cloud-sub{font-size:11px;color:var(--text-2);}
+
+/* Heatmap */
+.heatmap-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;}
+.heatmap-table th{background:#f7f6f3;color:var(--text-muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);}
+.heatmap-table th:first-child{text-align:left;}
+.heatmap-table td{padding:8px 12px;text-align:center;border-bottom:1px solid var(--grid);font-size:12px;font-weight:600;}
+.heatmap-table tr:last-child td{border-bottom:none;}
+.heatmap-table td:first-child{text-align:left;font-weight:700;}
+.hm-risk{font-size:10px;color:#d03b3b;display:block;font-weight:500;}
+
+/* Narrative card */
+.narrative-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:18px;line-height:1.7;}
+.narrative-card p{margin-bottom:10px;font-size:13px;color:var(--text-2);}
+.narrative-card p:last-child{margin-bottom:0;}
+.narrative-card strong{color:var(--text-1);}
+
+/* Segment matrix */
+.seg-matrix{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:18px;}
+.seg-matrix-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.sm-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sm-name{font-weight:700;font-size:13px;}
+.sm-atr{font-size:18px;font-weight:700;margin-bottom:2px;}
+.sm-sub{font-size:11px;color:var(--text-2);margin-bottom:8px;}
+
+/* Hotspot tables */
+.hotspot-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;font-size:12px;}
+.hotspot-table th{background:#f7f6f3;color:var(--text-muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.hotspot-table td{padding:8px 10px;border-bottom:1px solid var(--grid);vertical-align:middle;}
+.hotspot-table tr:last-child td{border-bottom:none;}
+.hotspot-table tr:hover td{background:#f9f8f5;}
+
+/* Trend cards */
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:18px;}
+.trend-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;border-left:4px solid #ccc;}
+.trend-card.warn{border-left-color:#d03b3b;}
+.trend-card.amber{border-left-color:#fab219;}
+.trend-card.good{border-left-color:#0ca30c;}
+.trend-card.info{border-left-color:#2a78d6;}
+.trend-title{font-weight:700;font-size:12px;margin-bottom:6px;}
+.trend-body{font-size:11px;color:var(--text-2);line-height:1.6;}
+
+/* Product tab */
+.prod-cloud-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.prod-cloud-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;}
+.prod-cloud-header:hover{background:#f7f6f3;}
+.prod-cloud-body{display:none;border-top:1px solid var(--border);}
+.prod-cloud-card.open .prod-cloud-body{display:block;}
+.prod-cloud-card.open .prod-cloud-chevron{transform:rotate(180deg);}
+.prod-cloud-chevron{color:var(--text-muted);font-size:12px;transition:transform .2s;flex-shrink:0;}
+
+.prod-seg-group{border-bottom:1px solid var(--grid);}
+.prod-seg-group:last-child{border-bottom:none;}
+.prod-seg-header{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;background:#fafaf8;user-select:none;}
+.prod-seg-header:hover{background:#f3f2ef;}
+.prod-seg-body{display:none;}
+.prod-seg-group.open .prod-seg-body{display:block;}
+.prod-seg-group.open .prod-seg-chevron{transform:rotate(180deg);}
+.prod-seg-chevron{color:var(--text-muted);font-size:11px;transition:transform .2s;flex-shrink:0;}
+
+.source-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;border:1px solid;}
+.source-badge.core{background:#e8f0fd;color:#1a56b8;border-color:#c3d5f5;}
+.source-badge.noncore{background:#fef5e0;color:#7a5800;border-color:#f5dfa0;}
+
+.risk-tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;color:#fff;}
+
+.kpi-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
+.kpi-mini{text-align:center;}
+.kpi-mini .val{font-size:15px;font-weight:700;}
+.kpi-mini .lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;}
+.count-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;}
+.count-badge.red{background:#fde8e8;color:#d03b3b;}
+.count-badge.amber{background:#fef5e0;color:#7a5800;}
+</style>
+</head>
+<body>
+<div class="dash-header">
+  <h1>India FY28 Key Renewals</h1>
+  <span class="badge-india">INDIA</span>
+  <span class="sub">FY28 &middot; MBR July 2026 &middot; Product Risk Edition</span>
+</div>
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab(0,this)">Executive Summary</button>
+  <button class="tab-btn" onclick="switchTab(1,this)">Top Accounts (&#8805;$200K) <span class="tab-count" id="tc1"></span></button>
+  <button class="tab-btn" onclick="switchTab(2,this)">Non-Core Accounts (&#8805;$100K) <span class="tab-count" id="tc2"></span></button>
+  <button class="tab-btn" onclick="switchTab(3,this)">Product Risk View <span class="tab-count" id="tc3"></span></button>
+</div>
+<div id="pane-0" class="tab-pane active"></div>
+<div id="pane-1" class="tab-pane"></div>
+<div id="pane-2" class="tab-pane"></div>
+<div id="pane-3" class="tab-pane"></div>
+<div id="tooltip" style="position:fixed;display:none;background:#1a1a1a;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;pointer-events:none;z-index:9999;max-width:280px;line-height:1.5"></div>
+<script>
+const TAB1 = [{"segment":"FINS","total_atr":19642078.0,"total_count":17,"attrition_groups":[{"reason":"No Risk","count":10,"atr":14185947.0,"rag_counts":{"GREEN":10},"accounts":[{"name":"Kotak Mahindra Bank Ltd.","atr":6714900.0,"rag":"GREEN","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.0,"comments":"SELA Renewal Discussion initiated. CSM working on Swap of unused licenses"},{"name":"L&T Finance Holdings Limited","atr":1777676.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.42,"comments":"Healthy adoption. Shelf qty is very low. Opportunity for more licenses here"},{"name":"Yes Bank Ltd - Mortgages","atr":1560291.0,"rag":"GREEN","cloud":"Core SFA","close":"Dec 2027","shelf_pct":0.29,"comments":"Healthy adoption. 3 Loan Products (PL, ML, BL) live"},{"name":"Axis Bank Ltd.","atr":1134073.0,"rag":"GREEN","cloud":"Core; Sales","close":"Jan 2028","shelf_pct":0.01,"comments":"Healthy adoption. 5 Loan Products running on the platform"},{"name":"Au Small Finance Bank Ltd.","atr":1047627.0,"rag":"GREEN","cloud":"Core SFA","close":"May 2027","shelf_pct":0.69,"comments":"Early renewal options under evaluation"},{"name":"L&T Finance Holdings Limited","atr":596445.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.13,"comments":"Healthy adoption"},{"name":"Aavas Financiers Ltd.","atr":569269.0,"rag":"GREEN","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.03,"comments":""},{"name":"Cred - Dreamplug Technologies","atr":298661.0,"rag":"GREEN","cloud":"Core; Slack","close":"Jan 2028","shelf_pct":0.0,"comments":""},{"name":"Auxilo Finserve Pvt Ltd","atr":270934.0,"rag":"GREEN","cloud":"Core SFA","close":"May 2027","shelf_pct":0.06,"comments":""},{"name":"Axis Bank Ltd.","atr":216071.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.01,"comments":""}]},{"reason":"Adoption","count":4,"atr":2366520.0,"rag_counts":{"AMBER":4},"accounts":[{"name":"Homefirst Finance Company","atr":1335054.0,"rag":"AMBER","cloud":"Core; OWN","close":"Jan 2028","shelf_pct":0.21,"comments":"$318K shelfware across 4 products - Sales, ISV, Tableau Server"},{"name":"RAZORPAY SOFTWARE LIMITED","atr":477967.0,"rag":"AMBER","cloud":"Core; Slack","close":"Mar 2027","shelf_pct":0.0,"comments":"$175K of shelfware on Tab"},{"name":"Kotak Securities Limited.","atr":331689.0,"rag":"AMBER","cloud":"Core SFA","close":"Sep 2027","shelf_pct":0.04,"comments":"Slack Invoice $60K shelfware under risk"},{"name":"HSBC Asset Management India","atr":221810.0,"rag":"AMBER","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.05,"comments":"$48K of shelfware (30%) across Service, Storage Packs"}]},{"reason":"Business Change and Distress","count":1,"atr":1793008.0,"rag_counts":{"RED":1},"accounts":[{"name":"HDFC Bank Ltd","atr":1793008.0,"rag":"RED","cloud":"Core SFA","close":"Jul 2027","shelf_pct":0.31,"comments":"HDFC moving to inhouse system - 19/Jun"}]},{"reason":"Financial & Contractual","count":1,"atr":954671.0,"rag_counts":{"RED":1},"accounts":[{"name":"Pine Labs Pvt Ltd.","atr":954671.0,"rag":"RED","cloud":"Core SFA","close":"May 2027","shelf_pct":0.04,"comments":"Customer moving to competition"}]},{"reason":"Implementation","count":1,"atr":341932.0,"rag_counts":{"AMBER":1},"accounts":[{"name":"Bandhan Bank Ltd.","atr":341932.0,"rag":"AMBER","cloud":"Core SFA","close":"Jun 2027","shelf_pct":0.0,"comments":"Under implementation & rollout. 30% shelfware"}]}]},{"segment":"CMI","total_atr":17048149.0,"total_count":29,"attrition_groups":[{"reason":"No Risk","count":22,"atr":10906031.0,"rag_counts":{"GREEN":22},"accounts":[{"name":"Air India Limited","atr":1922863.0,"rag":"GREEN","cloud":"Core; MC","close":"Jan 2028","shelf_pct":0.15,"comments":"Healthy adoption"},{"name":"Jaquar and Company Private Ltd","atr":1153020.0,"rag":"GREEN","cloud":"Core; Sales","close":"Jul 2027","shelf_pct":0.22,"comments":"Healthy adoption. Just went live with Field Service 2K+ licenses"},{"name":"Hyundai Autoever India","atr":735899.0,"rag":"GREEN","cloud":"Core SFA","close":"Jun 2027","shelf_pct":0.17,"comments":""},{"name":"Ceat Ltd.","atr":575038.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.0,"comments":""},{"name":"Cummins India Limited","atr":513125.0,"rag":"GREEN","cloud":"B2B Commerce","close":"Aug 2027","shelf_pct":0.0,"comments":""},{"name":"JK Cement Limited.","atr":503381.0,"rag":"GREEN","cloud":"Core SFA","close":"May 2027","shelf_pct":0.06,"comments":""},{"name":"Puma Energy Services","atr":494176.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.0,"comments":""},{"name":"Air India Limited","atr":467759.0,"rag":"GREEN","cloud":"Core; MC","close":"Dec 2027","shelf_pct":0.15,"comments":"Healthy adoption"},{"name":"V-Guard Industries Ltd.","atr":459449.0,"rag":"GREEN","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.02,"comments":""},{"name":"Polycab India Limited","atr":455097.0,"rag":"GREEN","cloud":"Core SFA","close":"Aug 2027","shelf_pct":0.05,"comments":""},{"name":"Cleartrip Pvt Ltd","atr":419854.0,"rag":"GREEN","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.05,"comments":""},{"name":"Puma Energy Services","atr":418414.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.12,"comments":""},{"name":"ATOMBERG TECHNOLOGIES","atr":369653.0,"rag":"GREEN","cloud":"Core; Tableau","close":"Feb 2027","shelf_pct":0.05,"comments":""},{"name":"Air India Limited","atr":314142.0,"rag":"GREEN","cloud":"Core; MC","close":"Dec 2027","shelf_pct":0.15,"comments":"Healthy adoption"},{"name":"Valvoline Cummins Pvt Ltd","atr":310353.0,"rag":"GREEN","cloud":"Core SFA","close":"Oct 2027","shelf_pct":0.04,"comments":""},{"name":"Air India Limited","atr":309003.0,"rag":"GREEN","cloud":"Core SFA","close":"May 2027","shelf_pct":0.15,"comments":""},{"name":"Kirloskar Brothers Ltd.","atr":269611.0,"rag":"GREEN","cloud":"Core; Partner","close":"Jun 2027","shelf_pct":0.0,"comments":""},{"name":"Raymond Ltd.","atr":268304.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.01,"comments":""},{"name":"Meesho Technologies Private","atr":249015.0,"rag":"GREEN","cloud":"Slack","close":"May 2027","shelf_pct":0.0,"comments":""},{"name":"Air India Limited","atr":248904.0,"rag":"GREEN","cloud":"Core; MC","close":"Apr 2027","shelf_pct":0.15,"comments":""},{"name":"Ashirvad Pipes Pvt Ltd","atr":243642.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.11,"comments":""},{"name":"Cars24 Services Private","atr":205329.0,"rag":"GREEN","cloud":"Slack","close":"May 2027","shelf_pct":0.33,"comments":""}]},{"reason":"Adoption","count":2,"atr":2281015.0,"rag_counts":{"RED":1,"AMBER":1},"accounts":[{"name":"Hero MotoCorp Ltd. IBU","atr":1584506.0,"rag":"RED","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.56,"comments":"High Shelfware $560K across Loyalty, D360, Einstein for Service, Connect API"},{"name":"TVS Motor Company Ltd.","atr":696509.0,"rag":"AMBER","cloud":"Core; Data","close":"Oct 2027","shelf_pct":0.34,"comments":"License on Shelf"}]},{"reason":"Business Change and Distress","count":2,"atr":2867374.0,"rag_counts":{"RED":2},"accounts":[{"name":"Ola Electric Technologies","atr":2658217.0,"rag":"RED","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.38,"comments":"Reduction in force (RIF)"},{"name":"Ola Electric Technologies","atr":209157.0,"rag":"RED","cloud":"Core; Slack","close":"Apr 2027","shelf_pct":0.38,"comments":""}]},{"reason":"Financial & Contractual","count":2,"atr":489081.0,"rag_counts":{"AMBER":1,"GREEN":1},"accounts":[{"name":"Honda Motorcycle & Scooter","atr":252591.0,"rag":"AMBER","cloud":"Core SFA","close":"Jul 2027","shelf_pct":0.0,"comments":"Heroku being EOS, customer may struggle on support and innovations"},{"name":"MakeMyTrip (India) Private","atr":236490.0,"rag":"GREEN","cloud":"Core SFA","close":"Oct 2027","shelf_pct":0.01,"comments":"Pricing challenges"}]},{"reason":"Implementation","count":1,"atr":504648.0,"rag_counts":{"RED":1},"accounts":[{"name":"Panasonic Life Solutions In…","atr":504648.0,"rag":"RED","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.06,"comments":"Implementation + Adoption issues"}]}]},{"segment":"TMTHRE","total_atr":16288026.0,"total_count":38,"attrition_groups":[{"reason":"No Risk","count":27,"atr":12455143.0,"rag_counts":{"GREEN":26,"AMBER":1},"accounts":[{"name":"Tata Communications International","atr":1984356.0,"rag":"GREEN","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.09,"comments":""},{"name":"InMobi Technology Services","atr":1312893.0,"rag":"GREEN","cloud":"Core; MC","close":"Jan 2028","shelf_pct":0.15,"comments":""},{"name":"EXL Service.com (India)","atr":836436.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.0,"comments":""},{"name":"Whatfix Private Limited","atr":790783.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.03,"comments":""},{"name":"Amagi Media Labs Ltd","atr":581392.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.0,"comments":""},{"name":"Wipro Limited","atr":518740.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.15,"comments":""},{"name":"Novateur Electrical & Digital","atr":453004.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.07,"comments":""},{"name":"Metropolis Healthcare Limited","atr":452796.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.03,"comments":""},{"name":"JIOSTAR INDIA PRIVATE LIMITED","atr":426406.0,"rag":"GREEN","cloud":"Slack","close":"Dec 2027","shelf_pct":0.0,"comments":""},{"name":"Tata Teleservices ltd.","atr":420252.0,"rag":"GREEN","cloud":"Core SFA","close":"Jul 2027","shelf_pct":0.08,"comments":""},{"name":"MULTIPLIER TECHNOLOGIES INDIA","atr":395557.0,"rag":"GREEN","cloud":"Core; Tableau","close":"Nov 2027","shelf_pct":0.01,"comments":""},{"name":"Lightstorm Data Centers","atr":356913.0,"rag":"AMBER","cloud":"Core; Sales","close":"Jan 2028","shelf_pct":0.27,"comments":""},{"name":"Reva University","atr":351741.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.0,"comments":""},{"name":"Flexstore Tech Private","atr":322133.0,"rag":"GREEN","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.14,"comments":""},{"name":"APTIA GROUP INDIA PRIVATE","atr":312978.0,"rag":"GREEN","cloud":"Core; OWN","close":"Feb 2027","shelf_pct":0.07,"comments":""},{"name":"Acuity Knowledge Services","atr":294001.0,"rag":"GREEN","cloud":"Core SFA","close":"Nov 2027","shelf_pct":0.05,"comments":""},{"name":"Hetero Drugs Ltd.","atr":269598.0,"rag":"GREEN","cloud":"Core; MC","close":"Jan 2028","shelf_pct":0.11,"comments":""},{"name":"Flexstore Tech Private","atr":269449.0,"rag":"GREEN","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.11,"comments":""},{"name":"Novateur Electrical & Digital","atr":266111.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.05,"comments":""},{"name":"GUARDIANS REAL ESTATE ADVISORS","atr":260569.0,"rag":"GREEN","cloud":"Core SFA","close":"Dec 2027","shelf_pct":0.06,"comments":""},{"name":"Total Environment Building","atr":255008.0,"rag":"GREEN","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.18,"comments":""},{"name":"Indian School of Business","atr":239699.0,"rag":"GREEN","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.0,"comments":""},{"name":"G SQUARE REALTORS PRIVATE","atr":231014.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.01,"comments":""},{"name":"Bennett, Coleman & Co.","atr":216739.0,"rag":"GREEN","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.01,"comments":""},{"name":"Whatfix Private Limited","atr":214701.0,"rag":"GREEN","cloud":"Core; Slack","close":"Jan 2028","shelf_pct":0.03,"comments":""},{"name":"PVR INOX Ltd.","atr":211574.0,"rag":"GREEN","cloud":"Core SFA","close":"Jan 2028","shelf_pct":0.07,"comments":""},{"name":"SVKM'S Nmims","atr":210300.0,"rag":"GREEN","cloud":"Core SFA","close":"Jul 2027","shelf_pct":0.0,"comments":""}]},{"reason":"Business Change and Distress","count":3,"atr":1234764.0,"rag_counts":{"AMBER":1,"RED":2},"accounts":[{"name":"Simplilearn Solutions","atr":528842.0,"rag":"AMBER","cloud":"Core SFA","close":"Apr 2027","shelf_pct":0.0,"comments":"EdTech macro volatility"},{"name":"UNext Learning Private","atr":494167.0,"rag":"RED","cloud":"Core SFA","close":"Mar 2027","shelf_pct":0.12,"comments":"Confirmed attrition"},{"name":"Wingify Software (VWO)","atr":211755.0,"rag":"RED","cloud":"Tableau","close":"Feb 2027","shelf_pct":0.0,"comments":""}]},{"reason":"Financial & Contractual","count":8,"atr":2598119.0,"rag_counts":{"AMBER":5,"GREEN":3},"accounts":[{"name":"Alembic Pharmaceuticals Ltd.","atr":455409.0,"rag":"AMBER","cloud":"Core SFA","close":"Dec 2027","shelf_pct":0.0,"comments":"Heroku Add-Ons on shelf, will be impacted by EOS"},{"name":"Sobha Ltd","atr":391704.0,"rag":"AMBER","cloud":"Core SFA","close":"May 2027","shelf_pct":0.32,"comments":""},{"name":"Narayana Hrudayalaya Limited","atr":346581.0,"rag":"AMBER","cloud":"Core SFA","close":"Sep 2027","shelf_pct":0.04,"comments":"$100K attrition risk"},{"name":"Zensar Technologies","atr":326794.0,"rag":"AMBER","cloud":"Core SFA","close":"Feb 2027","shelf_pct":0.27,"comments":""},{"name":"Puravankara Limited","atr":286516.0,"rag":"GREEN","cloud":"Core; OWN","close":"May 2027","shelf_pct":0.19,"comments":""},{"name":"Puravankara Limited","atr":286516.0,"rag":"GREEN","cloud":"Core; OWN","close":"May 2027","shelf_pct":0.19,"comments":""},{"name":"Alembic Pharmaceuticals Ltd.","atr":266109.0,"rag":"GREEN","cloud":"Core SFA","close":"Dec 2027","shelf_pct":0.0,"comments":""},{"name":"Deltek, Inc.","atr":238490.0,"rag":"AMBER","cloud":"Core SFA","close":"May 2027","shelf_pct":0.29,"comments":""}]}]}];
+
+const TAB2 = [{"segment":"FINS","total_atr":3662457.0,"total_count":13,"attrition_groups":[{"reason":"No Risk","count":11,"atr":3337437.0,"rag_counts":{"GREEN":11},"accounts":[{"name":"IDFC FIRST Bank Limited","atr":1298453.0,"rag":"GREEN","cloud":"Tableau","close":"May 2027","shelf_pct":0.0,"comments":"Renewed with value in May"},{"name":"Hero FinCorp Retail","atr":485356.0,"rag":"GREEN","cloud":"MuleSoft","close":"May 2027","shelf_pct":0.05,"comments":"Boomerang Sig Plan"},{"name":"YES Bank Ltd.","atr":295176.0,"rag":"GREEN","cloud":"Tableau","close":"Apr 2027","shelf_pct":0.11,"comments":""},{"name":"FORTUNIZE INDIA TECHNOLOGY","atr":271100.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Jan 2028","shelf_pct":0.07,"comments":""},{"name":"KISETSU SAISON FINANCE INDIA","atr":194643.0,"rag":"GREEN","cloud":"Tableau","close":"Oct 2027","shelf_pct":0.05,"comments":""},{"name":"NAVI LIMITED","atr":161205.0,"rag":"GREEN","cloud":"Tableau","close":"Apr 2027","shelf_pct":0.0,"comments":""},{"name":"HDFC Bank Limited.","atr":143313.0,"rag":"GREEN","cloud":"Tableau","close":"Apr 2027","shelf_pct":0.0,"comments":""},{"name":"Ujjivan Small Finance Bank","atr":139504.0,"rag":"GREEN","cloud":"Tableau","close":"Mar 2027","shelf_pct":1.0,"comments":""},{"name":"IndiaFirst Life Insurance","atr":127559.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Jan 2028","shelf_pct":1.0,"comments":"Under Implementation"},{"name":"Union Bank of India","atr":113795.0,"rag":"GREEN","cloud":"MuleSoft","close":"Feb 2027","shelf_pct":0.0,"comments":""},{"name":"ICICI Securities Ltd.","atr":107333.0,"rag":"GREEN","cloud":"Tableau","close":"May 2027","shelf_pct":0.0,"comments":""}]},{"reason":"Adoption","count":1,"atr":188344.0,"rag_counts":{"AMBER":1},"accounts":[{"name":"TVS Credit Services Limited","atr":188344.0,"rag":"AMBER","cloud":"Tableau","close":"Mar 2027","shelf_pct":0.0,"comments":"Overall the Account is in Red state"}]},{"reason":"Business Change and Distress","count":1,"atr":136676.0,"rag_counts":{"RED":1},"accounts":[{"name":"Aavas Financiers Ltd.","atr":136676.0,"rag":"RED","cloud":"MuleSoft","close":"Feb 2027","shelf_pct":0.24,"comments":""}]}]},{"segment":"CMI","total_atr":3599822.0,"total_count":12,"attrition_groups":[{"reason":"No Risk","count":8,"atr":1591223.0,"rag_counts":{"GREEN":8},"accounts":[{"name":"Marks and Spencer Reliance","atr":399911.0,"rag":"GREEN","cloud":"Commerce","close":"May 2027","shelf_pct":0.25,"comments":"Healthy usage"},{"name":"Bajaj Auto Ltd.","atr":266412.0,"rag":"GREEN","cloud":"MuleSoft","close":"Jan 2028","shelf_pct":0.15,"comments":""},{"name":"Air India Limited","atr":257434.0,"rag":"GREEN","cloud":"Tableau","close":"Dec 2027","shelf_pct":0.03,"comments":""},{"name":"Hyundai Autoever India","atr":182618.0,"rag":"GREEN","cloud":"Tableau","close":"Jun 2027","shelf_pct":1.0,"comments":""},{"name":"Nykaa E-Retail Pvt. Ltd.","atr":147083.0,"rag":"GREEN","cloud":"Tableau","close":"May 2027","shelf_pct":0.0,"comments":""},{"name":"Trafigura Pte Ltd","atr":125608.0,"rag":"GREEN","cloud":"Tableau","close":"Oct 2027","shelf_pct":0.0,"comments":""},{"name":"Sai Silks Kalamandir Limited","atr":110741.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Nov 2027","shelf_pct":0.21,"comments":""},{"name":"Chunmun Stores Pvt. Ltd.","atr":101416.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Apr 2027","shelf_pct":0.14,"comments":""}]},{"reason":"Adoption","count":1,"atr":105971.0,"rag_counts":{"RED":1},"accounts":[{"name":"JK Cement Limited.","atr":105971.0,"rag":"RED","cloud":"Mktg Cloud","close":"May 2027","shelf_pct":0.61,"comments":"High shelfware on 3 yr contract"}]},{"reason":"Financial & Contractual","count":3,"atr":1902628.0,"rag_counts":{"AMBER":3},"accounts":[{"name":"Maruti Suzuki India Ltd.","atr":1289671.0,"rag":"AMBER","cloud":"MuleSoft","close":"Jun 2027","shelf_pct":0.24,"comments":"Onboarded Signature"},{"name":"Lifestyle International","atr":331312.0,"rag":"AMBER","cloud":"Mktg Cloud","close":"Feb 2027","shelf_pct":0.5,"comments":"Based on WhatsApp pricing"},{"name":"BIBA FASHION LIMITED","atr":281645.0,"rag":"AMBER","cloud":"Mktg Cloud","close":"May 2027","shelf_pct":0.3,"comments":"Based on WhatsApp pricing"}]}]},{"segment":"TMTHRE","total_atr":6103348.0,"total_count":14,"attrition_groups":[{"reason":"No Risk","count":9,"atr":4914666.0,"rag_counts":{"GREEN":9},"accounts":[{"name":"PVR INOX Ltd","atr":1674473.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Mar 2027","shelf_pct":0.0,"comments":""},{"name":"Jio Platforms Limited","atr":1535869.0,"rag":"GREEN","cloud":"Tableau","close":"Jan 2028","shelf_pct":0.0,"comments":""},{"name":"Jio Platforms Limited","atr":477583.0,"rag":"GREEN","cloud":"Tableau","close":"May 2027","shelf_pct":0.0,"comments":""},{"name":"ERULEARNING SOLUTIONS","atr":345669.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Jan 2028","shelf_pct":0.48,"comments":"New contract"},{"name":"Abhinandan Ventures","atr":233599.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Oct 2027","shelf_pct":1.0,"comments":"Onboarded Signature"},{"name":"BrowserStack Software","atr":216691.0,"rag":"GREEN","cloud":"Slack","close":"Jan 2028","shelf_pct":0.07,"comments":""},{"name":"Innovaccer Analytics Private","atr":200938.0,"rag":"GREEN","cloud":"Tableau","close":"Apr 2027","shelf_pct":0.0,"comments":""},{"name":"Metropolis Healthcare Limited","atr":121094.0,"rag":"GREEN","cloud":"MuleSoft","close":"Mar 2027","shelf_pct":1.0,"comments":""},{"name":"Times Professional Learning","atr":108750.0,"rag":"GREEN","cloud":"Mktg Cloud","close":"Jun 2027","shelf_pct":0.04,"comments":""}]},{"reason":"Adoption","count":2,"atr":556165.0,"rag_counts":{"AMBER":1,"RED":1},"accounts":[{"name":"Tata Play Limited","atr":342185.0,"rag":"AMBER","cloud":"Mktg Cloud","close":"Dec 2027","shelf_pct":0.0,"comments":"Sig Trial Engaged"},{"name":"Dr Reddy's Laboratories","atr":213980.0,"rag":"RED","cloud":"Mktg Cloud","close":"Sep 2027","shelf_pct":0.64,"comments":"High shelfware"}]},{"reason":"Financial & Contractual","count":3,"atr":632517.0,"rag_counts":{"GREEN":2,"RED":1},"accounts":[{"name":"Goods And Services Tax Network","atr":315473.0,"rag":"GREEN","cloud":"Tableau","close":"Mar 2027","shelf_pct":0.0,"comments":"Govt Contracts are for specific projects for one year.  May Attrit"},{"name":"The Comptroller & Auditor General","atr":184326.0,"rag":"GREEN","cloud":"Tableau","close":"Mar 2027","shelf_pct":0.0,"comments":"Govt Contracts are for specific projects for one year.  May Attrit"},{"name":"DoIT&C Rajasthan","atr":132718.0,"rag":"RED","cloud":"Tableau","close":"Jan 2028","shelf_pct":1.0,"comments":"Govt Contracts are for specific projects for one year.  May Attrit"}]}]},{"segment":"ESMB","total_atr":558695.0,"total_count":1,"attrition_groups":[{"reason":"Business Change and Distress","count":1,"atr":558695.0,"rag_counts":{"RED":1},"accounts":[{"name":"COMSENSE TECHNOLOGIES PRIVATE","atr":558695.0,"rag":"RED","cloud":"Mktg Cloud","close":"Apr 2027","shelf_pct":0.0,"comments":""}]}]}];
+
+const REASON_COLOR = {
+  'No Risk': '#1baf7a',
+  'Adoption': '#eda100',
+  'Business Change and Distress': '#e34948',
+  'Financial & Contractual': '#eb6834',
+  'Implementation': '#4a3aa7',
+  'Unknown': '#c3c2b7'
+};
+const SEG_COLOR = { FINS:'#2a78d6', CMI:'#1baf7a', TMTHRE:'#4a3aa7', ESMB:'#eb6834' };
+const SEG_LABEL = { FINS:'Financial Services', CMI:'Consumer & Industrial', TMTHRE:'Tech, Media, Telecom & Healthcare', ESMB:'Enterprise SMB' };
+const CLOUD_COLOR = {
+  'Core SFA':'#2a78d6', 'Mktg Cloud':'#e87ba4', 'Tableau':'#eb6834',
+  'MuleSoft':'#4a3aa7', 'Slack':'#1baf7a', 'Commerce':'#eda100',
+  'Data Cloud':'#008300', 'Other':'#c3c2b7'
+};
+const CLOUD_ORDER = ['Core SFA','Tableau','Mktg Cloud','MuleSoft','Slack','Commerce','Data Cloud','Other'];
+const SEGS = ['FINS','CMI','TMTHRE','ESMB'];
+
+function fmtAtr(v) {
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '$' + Math.round(v/1e3) + 'K';
+  return '$' + Math.round(v);
+}
+function fmtPct(v) { return (v*100).toFixed(0) + '%'; }
+function normalizeCloud(c) {
+  if (!c) return 'Other';
+  if (c.startsWith('Core')) return 'Core SFA';
+  if (c === 'Tableau') return 'Tableau';
+  if (c === 'MuleSoft') return 'MuleSoft';
+  if (c.includes('Mktg') || c === 'MC') return 'Mktg Cloud';
+  if (c === 'Slack') return 'Slack';
+  if (c.includes('Commerce') || c.includes('B2B')) return 'Commerce';
+  if (c.includes('Data')) return 'Data Cloud';
+  return 'Other';
+}
+
+function showTip(e, html) {
+  const t = document.getElementById('tooltip');
+  t.innerHTML = html; t.style.display='block';
+  t.style.left = (e.pageX+12)+'px'; t.style.top = (e.pageY-10)+'px';
+}
+function hideTip() { document.getElementById('tooltip').style.display='none'; }
+function toggleSeg(id) { document.getElementById(id).classList.toggle('open'); }
+function toggleGroup(id) { document.getElementById(id).classList.toggle('open'); }
+function switchTab(n, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-'+n).classList.add('active');
+}
+// ---- renderTab (Tabs 1 & 2) ----
+function renderTab(data, pane, minLabel) {
+  const REASON_ORDER = ['No Risk','Business Change and Distress','Financial & Contractual','Adoption','Implementation','Unknown'];
+  let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Showing accounts ${minLabel} Core ATR. Click segment headers to expand/collapse.</div>`;
+  data.forEach((seg, si) => {
+    const segId = `seg-${pane.id}-${si}`;
+    const noRiskGrp = seg.attrition_groups.find(g=>g.reason==='No Risk');
+    const noRiskAtr = noRiskGrp ? noRiskGrp.atr : 0;
+    const noRiskPct = seg.total_atr > 0 ? (noRiskAtr/seg.total_atr*100).toFixed(0) : 0;
+    // count RED/AMBER
+    let redCnt=0, amberCnt=0;
+    seg.attrition_groups.forEach(g=>{
+      if(g.rag_counts.RED) redCnt += g.rag_counts.RED;
+      if(g.rag_counts.AMBER) amberCnt += g.rag_counts.AMBER;
+    });
+    // stacked bar
+    const totalAtr = seg.total_atr;
+    let barSegs = '';
+    REASON_ORDER.forEach(r=>{
+      const g = seg.attrition_groups.find(x=>x.reason===r);
+      if(!g) return;
+      const pct = (g.atr/totalAtr*100).toFixed(1);
+      barSegs += `<div class="bar-seg" style="width:${pct}%;background:${REASON_COLOR[r]};min-width:${pct>0?'2px':'0'}" onmouseenter="showTip(event,'<b>${r}</b><br>${fmtAtr(g.atr)} (${pct}%)')" onmouseleave="hideTip()"></div>`;
+    });
+    html += `<div class="seg-card${si===0?' open':''}" id="${segId}">
+      <div class="seg-header" onclick="toggleSeg('${segId}')">
+        <span class="seg-pill" style="background:${SEG_COLOR[seg.segment]||'#888'}"></span>
+        <span class="seg-name">${SEG_LABEL[seg.segment]||seg.segment}</span>
+        <span class="seg-atr">${fmtAtr(seg.total_atr)}</span>
+        <span class="seg-count">${seg.total_count} accounts</span>
+        <span class="seg-norisk">${noRiskPct}% No-Risk</span>
+        <div class="stacked-bar" style="width:120px;height:10px;">${barSegs}</div>
+        ${redCnt>0?`<span class="count-badge red">${redCnt} RED</span>`:''}
+        ${amberCnt>0?`<span class="count-badge amber">${amberCnt} AMBER</span>`:''}
+        <span class="seg-chevron">&#9660;</span>
+      </div>
+      <div class="seg-body">`;
+    // sort groups: No Risk first, then by ATR desc
+    const sorted = [...seg.attrition_groups].sort((a,b)=>{
+      if(a.reason==='No Risk') return -1;
+      if(b.reason==='No Risk') return 1;
+      return b.atr - a.atr;
+    });
+    sorted.forEach((grp, gi) => {
+      const grpId = `rg-${pane.id}-${si}-${gi}`;
+      const isAtRisk = grp.reason !== 'No Risk';
+      const ragBreak = Object.entries(grp.rag_counts).map(([r,c])=>`<span class="rag-badge ${r}">${c} ${r}</span>`).join(' ');
+      html += `<div class="risk-group${isAtRisk?' open':''}" id="${grpId}">
+        <div class="risk-header" onclick="toggleGroup('${grpId}')">
+          <span class="risk-dot" style="background:${REASON_COLOR[grp.reason]||'#999'}"></span>
+          <span class="risk-label">${grp.reason}</span>
+          <span style="color:var(--text-muted);font-size:11px;">${grp.count} accounts</span>
+          <span class="risk-atr">${fmtAtr(grp.atr)}</span>
+          <span style="display:flex;gap:4px;flex-wrap:wrap;">${ragBreak}</span>
+          <span class="risk-chevron">&#9660;</span>
+        </div>
+        <div class="risk-body">
+          <table class="acct-table">
+            <thead><tr>
+              <th>#</th><th>Account</th><th>RAG</th><th>ATR</th><th>Shelf%</th><th>Close</th><th>Comments</th>
+            </tr></thead>
+            <tbody>`;
+      grp.accounts.forEach((a, ai) => {
+        const shelfClass = a.shelf_pct >= 0.3 ? 'shelf-high' : (a.shelf_pct >= 0.1 ? 'shelf-med' : '');
+        const cloudNorm = normalizeCloud(a.cloud);
+        html += `<tr>
+          <td style="color:var(--text-muted)">${ai+1}</td>
+          <td><span class="acct-name">${a.name}</span> <span class="cloud-chip" style="background:${CLOUD_COLOR[cloudNorm]||'#888'}">${cloudNorm}</span></td>
+          <td><span class="rag-badge ${a.rag||'NA'}">${a.rag||'N/A'}</span></td>
+          <td style="font-weight:700">${fmtAtr(a.atr)}</td>
+          <td class="${shelfClass}">${fmtPct(a.shelf_pct)}</td>
+          <td style="color:var(--text-2)">${a.close}</td>
+          <td class="comment-cell">${a.comments||''}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    });
+    html += `</div></div>`;
+  });
+  pane.innerHTML = html;
+}
+// ---- renderProductTab (Tab 3) ----
+function renderProductTab(pane) {
+  // Flatten all accounts from both datasets
+  const allAccounts = [];
+  TAB1.forEach(seg => {
+    seg.attrition_groups.forEach(grp => {
+      grp.accounts.forEach(a => {
+        allAccounts.push({...a, segment: seg.segment, source:'Core', reason: grp.reason});
+      });
+    });
+  });
+  TAB2.forEach(seg => {
+    seg.attrition_groups.forEach(grp => {
+      grp.accounts.forEach(a => {
+        allAccounts.push({...a, segment: seg.segment, source:'Non-Core', reason: grp.reason});
+      });
+    });
+  });
+
+  // Group by cloud
+  const byCloud = {};
+  allAccounts.forEach(a => {
+    const cl = normalizeCloud(a.cloud);
+    if (!byCloud[cl]) byCloud[cl] = [];
+    byCloud[cl].push(a);
+  });
+
+  // Portfolio bar
+  const totalAll = allAccounts.reduce((s,a)=>s+a.atr,0);
+  let pbHtml = '';
+  CLOUD_ORDER.forEach(cl => {
+    if (!byCloud[cl]) return;
+    const clAtr = byCloud[cl].reduce((s,a)=>s+a.atr,0);
+    const pct = (clAtr/totalAll*100).toFixed(1);
+    pbHtml += `<div class="pb-seg" style="width:${pct}%;background:${CLOUD_COLOR[cl]}" onmouseenter="showTip(event,'<b>${cl}</b><br>${fmtAtr(clAtr)} (${pct}%)')" onmouseleave="hideTip()"></div>`;
+  });
+
+  let legendHtml = '';
+  CLOUD_ORDER.forEach(cl => {
+    if (!byCloud[cl]) return;
+    const clAtr = byCloud[cl].reduce((s,a)=>s+a.atr,0);
+    const pct = (clAtr/totalAll*100).toFixed(0);
+    legendHtml += `<span class="legend-chip"><span class="legend-dot" style="background:${CLOUD_COLOR[cl]}"></span><b>${cl}</b> ${fmtAtr(clAtr)} (${pct}%)</span>`;
+  });
+
+  let html = `
+    <div class="portfolio-bar-wrap">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Combined Portfolio by Cloud Product</div>
+      <div class="portfolio-bar">${pbHtml}</div>
+      <div class="legend-chips">${legendHtml}</div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Accounts grouped by primary cloud product. Includes both Core (&ge;$200K) and Non-Core (&ge;$100K) datasets.</div>`;
+
+  let cloudIdx = 0;
+  CLOUD_ORDER.forEach(cl => {
+    if (!byCloud[cl]) return;
+    const accts = byCloud[cl];
+    const clAtr = accts.reduce((s,a)=>s+a.atr,0);
+    const noRiskAtr = accts.filter(a=>a.reason==='No Risk').reduce((s,a)=>s+a.atr,0);
+    const noRiskPct = clAtr > 0 ? (noRiskAtr/clAtr*100).toFixed(0) : 0;
+    const atRiskAtr = clAtr - noRiskAtr;
+    const redCnt = accts.filter(a=>a.rag==='RED').length;
+    const amberCnt = accts.filter(a=>a.rag==='AMBER').length;
+    const hasRisk = redCnt>0 || amberCnt>0;
+    const cardId = `pcc-${cloudIdx}`;
+    cloudIdx++;
+
+    // Stacked bar by reason for this cloud
+    const reasonMap = {};
+    accts.forEach(a => {
+      if(!reasonMap[a.reason]) reasonMap[a.reason]=0;
+      reasonMap[a.reason] += a.atr;
+    });
+    let clBarSegs = '';
+    const REASON_ORDER2 = ['No Risk','Business Change and Distress','Financial & Contractual','Adoption','Implementation','Unknown'];
+    REASON_ORDER2.forEach(r => {
+      if(!reasonMap[r]) return;
+      const pct = (reasonMap[r]/clAtr*100).toFixed(1);
+      clBarSegs += `<div class="bar-seg" style="width:${pct}%;background:${REASON_COLOR[r]}" onmouseenter="showTip(event,'<b>${r}</b><br>${fmtAtr(reasonMap[r])} (${pct}%)')" onmouseleave="hideTip()"></div>`;
+    });
+
+    html += `<div class="prod-cloud-card${hasRisk?' open':''}" id="${cardId}">
+      <div class="prod-cloud-header" onclick="document.getElementById('${cardId}').classList.toggle('open');this.querySelector('.prod-cloud-chevron').style.transform=document.getElementById('${cardId}').classList.contains('open')?'rotate(180deg)':''">
+        <span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:11px;padding:3px 10px">${cl}</span>
+        <div class="kpi-row">
+          <div class="kpi-mini"><div class="val">${fmtAtr(clAtr)}</div><div class="lbl">Total ATR</div></div>
+          <div class="kpi-mini"><div class="val">${noRiskPct}%</div><div class="lbl">No-Risk</div></div>
+          <div class="kpi-mini"><div class="val">${fmtAtr(atRiskAtr)}</div><div class="lbl">At-Risk</div></div>
+          <div class="kpi-mini"><div class="val">${accts.length}</div><div class="lbl">Accounts</div></div>
+        </div>
+        <div class="stacked-bar" style="width:100px;height:10px;">${clBarSegs}</div>
+        ${redCnt>0?`<span class="count-badge red">${redCnt} RED</span>`:''}
+        ${amberCnt>0?`<span class="count-badge amber">${amberCnt} AMBER</span>`:''}
+        <span class="prod-cloud-chevron" style="color:var(--text-muted);font-size:12px;transition:transform .2s;margin-left:auto;">&#9660;</span>
+      </div>
+      <div class="prod-cloud-body">`;
+
+    // Sub-group by segment
+    SEGS.forEach((seg, sgi) => {
+      const segAccts = accts.filter(a=>a.segment===seg).sort((a,b)=>b.atr-a.atr);
+      if (!segAccts.length) return;
+      const segAtr = segAccts.reduce((s,a)=>s+a.atr,0);
+      const segNoRiskPct = segAtr > 0 ? (segAccts.filter(a=>a.reason==='No Risk').reduce((s,a)=>s+a.atr,0)/segAtr*100).toFixed(0) : 0;
+      const segRed = segAccts.filter(a=>a.rag==='RED').length;
+      const segAmber = segAccts.filter(a=>a.rag==='AMBER').length;
+      const sgId = `psg-${cardId}-${sgi}`;
+      const segHasRisk = segRed>0 || segAmber>0;
+
+      html += `<div class="prod-seg-group${segHasRisk?' open':''}" id="${sgId}">
+        <div class="prod-seg-header" onclick="toggleGroup('${sgId}')">
+          <span style="width:9px;height:9px;border-radius:50%;background:${SEG_COLOR[seg]||'#888'};display:inline-block;flex-shrink:0"></span>
+          <span style="font-weight:600;font-size:12px;flex:1">${SEG_LABEL[seg]||seg}</span>
+          <span style="color:var(--text-muted);font-size:11px;">${segAccts.length} accts</span>
+          <span style="font-weight:700;font-size:12px">${fmtAtr(segAtr)}</span>
+          <span style="font-size:11px;color:var(--good)">${segNoRiskPct}% NR</span>
+          ${segRed>0?`<span class="count-badge red">${segRed} RED</span>`:''}
+          ${segAmber>0?`<span class="count-badge amber">${segAmber} AMBER</span>`:''}
+          <span class="prod-seg-chevron" style="color:var(--text-muted);font-size:11px;transition:transform .2s;">&#9660;</span>
+        </div>
+        <div class="prod-seg-body">
+          <table class="acct-table">
+            <thead><tr>
+              <th>#</th><th>Account</th><th>Source</th><th>Risk Reason</th><th>RAG</th><th>ATR</th><th>Close</th><th>Shelf%</th><th>Comments</th>
+            </tr></thead>
+            <tbody>`;
+      segAccts.forEach((a, ai) => {
+        const shelfClass = a.shelf_pct >= 0.3 ? 'shelf-high' : (a.shelf_pct >= 0.1 ? 'shelf-med' : '');
+        const reasonColor = REASON_COLOR[a.reason] || '#999';
+        html += `<tr>
+          <td style="color:var(--text-muted)">${ai+1}</td>
+          <td><span class="acct-name">${a.name}</span></td>
+          <td><span class="source-badge ${a.source==='Core'?'core':'noncore'}">${a.source}</span></td>
+          <td><span class="risk-tag" style="background:${reasonColor}">${a.reason}</span></td>
+          <td><span class="rag-badge ${a.rag||'NA'}">${a.rag||'N/A'}</span></td>
+          <td style="font-weight:700">${fmtAtr(a.atr)}</td>
+          <td style="color:var(--text-2)">${a.close}</td>
+          <td class="${shelfClass}">${fmtPct(a.shelf_pct)}</td>
+          <td class="comment-cell">${a.comments||''}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    });
+    html += `</div></div>`;
+  });
+  pane.innerHTML = html;
+}
+// ---- renderExecSummary (Tab 0) ----
+function renderExecSummary(pane) {
+  // Flatten all accounts
+  const allAccts = [];
+  TAB1.forEach(seg => seg.attrition_groups.forEach(grp => grp.accounts.forEach(a=>allAccts.push({...a,segment:seg.segment,source:'Core',reason:grp.reason}))));
+  TAB2.forEach(seg => seg.attrition_groups.forEach(grp => grp.accounts.forEach(a=>allAccts.push({...a,segment:seg.segment,source:'Non-Core',reason:grp.reason}))));
+
+  const totalAtr = allAccts.reduce((s,a)=>s+a.atr,0);
+  const noRiskAtr = allAccts.filter(a=>a.reason==='No Risk').reduce((s,a)=>s+a.atr,0);
+  const atRiskAtr = totalAtr - noRiskAtr;
+  const redAtr = allAccts.filter(a=>a.rag==='RED').reduce((s,a)=>s+a.atr,0);
+  const amberAtr = allAccts.filter(a=>a.rag==='AMBER').reduce((s,a)=>s+a.atr,0);
+  const bizChgAtr = allAccts.filter(a=>a.reason==='Business Change and Distress').reduce((s,a)=>s+a.atr,0);
+  const adoptAtr = allAccts.filter(a=>a.reason==='Adoption').reduce((s,a)=>s+a.atr,0);
+  const noRiskPct = (noRiskAtr/totalAtr*100).toFixed(0);
+  const atRiskPct = (atRiskAtr/totalAtr*100).toFixed(0);
+
+  // Cloud ATR map
+  const cloudAtr = {};
+  const cloudNoRisk = {};
+  const cloudRed = {};
+  const cloudAmber = {};
+  allAccts.forEach(a => {
+    const cl = normalizeCloud(a.cloud);
+    cloudAtr[cl] = (cloudAtr[cl]||0) + a.atr;
+    if(a.reason==='No Risk') cloudNoRisk[cl] = (cloudNoRisk[cl]||0) + a.atr;
+    if(a.rag==='RED') cloudRed[cl] = (cloudRed[cl]||0) + 1;
+    if(a.rag==='AMBER') cloudAmber[cl] = (cloudAmber[cl]||0) + 1;
+  });
+
+  // Segment ATR / stats
+  const segStats = {};
+  SEGS.forEach(s => {
+    const sAccts = allAccts.filter(a=>a.segment===s);
+    const sAtr = sAccts.reduce((x,a)=>x+a.atr,0);
+    const sNR = sAccts.filter(a=>a.reason==='No Risk').reduce((x,a)=>x+a.atr,0);
+    const sRed = sAccts.filter(a=>a.rag==='RED').length;
+    const sAmb = sAccts.filter(a=>a.rag==='AMBER').length;
+    segStats[s] = {accts:sAccts.length, atr:sAtr, noRiskPct: sAtr>0?(sNR/sAtr*100).toFixed(0):0, red:sRed, amber:sAmb};
+  });
+
+  // Cloud x Segment ATR matrix
+  const clSegAtr = {};
+  const clSegRisk = {};
+  allAccts.forEach(a => {
+    const cl = normalizeCloud(a.cloud);
+    const key = `${cl}__${a.segment}`;
+    clSegAtr[key] = (clSegAtr[key]||0) + a.atr;
+    if(a.rag==='RED'||a.rag==='AMBER') clSegRisk[key] = (clSegRisk[key]||0) + a.atr;
+  });
+
+  // Portfolio bar
+  const pbTotal = totalAtr;
+  let pbHtml = '';
+  CLOUD_ORDER.forEach(cl => {
+    if(!cloudAtr[cl]) return;
+    const pct = (cloudAtr[cl]/pbTotal*100).toFixed(1);
+    pbHtml += `<div class="pb-seg" style="width:${pct}%;background:${CLOUD_COLOR[cl]}" onmouseenter="showTip(event,'<b>${cl}</b><br>${fmtAtr(cloudAtr[cl])} (${pct}%)<br>No-Risk: ${cloudAtr[cl]>0?((cloudNoRisk[cl]||0)/cloudAtr[cl]*100).toFixed(0):0}%')" onmouseleave="hideTip()"></div>`;
+  });
+  let legendHtml = '';
+  CLOUD_ORDER.forEach(cl => {
+    if(!cloudAtr[cl]) return;
+    const pct = (cloudAtr[cl]/pbTotal*100).toFixed(0);
+    legendHtml += `<span class="legend-chip"><span class="legend-dot" style="background:${CLOUD_COLOR[cl]}"></span><b>${cl}</b> ${fmtAtr(cloudAtr[cl])} (${pct}%)</span>`;
+  });
+
+  // Cloud health cards
+  let cloudCardsHtml = '<div class="cloud-grid">';
+  CLOUD_ORDER.forEach(cl => {
+    if(!cloudAtr[cl]) return;
+    const clNR = cloudNoRisk[cl]||0;
+    const clNRpct = cloudAtr[cl]>0?(clNR/cloudAtr[cl]*100).toFixed(0):0;
+    const clAtRisk = cloudAtr[cl] - clNR;
+    const clR = cloudRed[cl]||0;
+    const clA = cloudAmber[cl]||0;
+    // mini bar
+    const miniNR = (clNR/cloudAtr[cl]*100).toFixed(0);
+    const miniRisk = (clAtRisk/cloudAtr[cl]*100).toFixed(0);
+    cloudCardsHtml += `<div class="cloud-card">
+      <div class="cloud-card-header">
+        <span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:11px;padding:3px 10px">${cl}</span>
+        ${clR>0?`<span class="count-badge red">${clR} RED</span>`:''}
+        ${clA>0?`<span class="count-badge amber">${clA} AMBER</span>`:''}
+      </div>
+      <div class="cloud-atr">${fmtAtr(cloudAtr[cl])}</div>
+      <div class="cloud-sub">No-Risk: ${clNRpct}% &middot; At-Risk: ${fmtAtr(clAtRisk)}</div>
+      <div class="stacked-bar" style="margin-top:8px;height:6px">
+        <div style="width:${miniNR}%;background:#1baf7a;border-radius:4px 0 0 4px"></div>
+        <div style="width:${miniRisk}%;background:#e34948;border-radius:0 4px 4px 0"></div>
+      </div>
+    </div>`;
+  });
+  cloudCardsHtml += '</div>';
+
+  // Heatmap
+  const maxVal = Math.max(...Object.values(clSegAtr));
+  let hmHtml = `<table class="heatmap-table">
+    <thead><tr><th>Cloud</th>${SEGS.map(s=>`<th>${s}</th>`).join('')}</tr></thead>
+    <tbody>`;
+  CLOUD_ORDER.forEach(cl => {
+    if(!cloudAtr[cl]) return;
+    hmHtml += `<tr><td><span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:10px;padding:2px 7px">${cl}</span></td>`;
+    SEGS.forEach(s => {
+      const key = `${cl}__${s}`;
+      const v = clSegAtr[key]||0;
+      const riskV = clSegRisk[key]||0;
+      if(!v){hmHtml+='<td style="color:var(--text-muted)">—</td>';return;}
+      const alpha = Math.max(0.08, (v/maxVal)*0.55);
+      const clRGB = CLOUD_COLOR[cl].replace('#','');
+      const r=parseInt(clRGB.slice(0,2),16),g=parseInt(clRGB.slice(2,4),16),b=parseInt(clRGB.slice(4,6),16);
+      const bg = `rgba(${r},${g},${b},${alpha})`;
+      hmHtml += `<td style="background:${bg};font-size:12px">${fmtAtr(v)}${riskV>0?`<span class="hm-risk">&#9888; ${fmtAtr(riskV)}</span>`:''}</td>`;
+    });
+    hmHtml += '</tr>';
+  });
+  hmHtml += '</tbody></table>';
+
+  // RED hotspot table
+  const redAccts = allAccts.filter(a=>a.rag==='RED').sort((a,b)=>b.atr-a.atr).slice(0,12);
+  let redTableHtml = `<table class="hotspot-table"><thead><tr>
+    <th>#</th><th>Account</th><th>Segment</th><th>Cloud</th><th>ATR</th><th>RAG</th><th>Risk Reason</th><th>Comments</th><th>Close</th>
+  </tr></thead><tbody>`;
+  redAccts.forEach((a,i)=>{
+    const cl = normalizeCloud(a.cloud);
+    redTableHtml += `<tr>
+      <td style="color:var(--text-muted)">${i+1}</td>
+      <td><span class="acct-name">${a.name}</span></td>
+      <td><span class="cloud-chip" style="background:${SEG_COLOR[a.segment]||'#888'};font-size:9.5px">${a.segment}</span></td>
+      <td><span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:9.5px">${cl}</span></td>
+      <td style="font-weight:700">${fmtAtr(a.atr)}</td>
+      <td><span class="rag-badge RED">RED</span></td>
+      <td><span class="risk-tag" style="background:${REASON_COLOR[a.reason]||'#999'};font-size:10px">${a.reason}</span></td>
+      <td class="comment-cell">${a.comments||''}</td>
+      <td>${a.close}</td>
+    </tr>`;
+  });
+  redTableHtml += '</tbody></table>';
+
+  // AMBER watchlist
+  const amberAccts = allAccts.filter(a=>a.rag==='AMBER').sort((a,b)=>b.atr-a.atr).slice(0,12);
+  let amberTableHtml = `<table class="hotspot-table"><thead><tr>
+    <th>#</th><th>Account</th><th>Segment</th><th>Cloud</th><th>ATR</th><th>RAG</th><th>Risk Reason</th><th>Comments</th><th>Close</th>
+  </tr></thead><tbody>`;
+  amberAccts.forEach((a,i)=>{
+    const cl = normalizeCloud(a.cloud);
+    amberTableHtml += `<tr>
+      <td style="color:var(--text-muted)">${i+1}</td>
+      <td><span class="acct-name">${a.name}</span></td>
+      <td><span class="cloud-chip" style="background:${SEG_COLOR[a.segment]||'#888'};font-size:9.5px">${a.segment}</span></td>
+      <td><span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:9.5px">${cl}</span></td>
+      <td style="font-weight:700">${fmtAtr(a.atr)}</td>
+      <td><span class="rag-badge AMBER">AMBER</span></td>
+      <td><span class="risk-tag" style="background:${REASON_COLOR[a.reason]||'#999'};font-size:10px">${a.reason}</span></td>
+      <td class="comment-cell">${a.comments||''}</td>
+      <td>${a.close}</td>
+    </tr>`;
+  });
+  amberTableHtml += '</tbody></table>';
+
+  // Segment matrix
+  let segMatrixHtml = '<div class="seg-matrix">';
+  SEGS.forEach(s=>{
+    const ss = segStats[s];
+    if(!ss||!ss.atr) return;
+    // top clouds for this segment
+    const segCloudAtr = {};
+    allAccts.filter(a=>a.segment===s).forEach(a=>{
+      const cl = normalizeCloud(a.cloud);
+      segCloudAtr[cl] = (segCloudAtr[cl]||0) + a.atr;
+    });
+    const topClouds = Object.entries(segCloudAtr).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const nrPct = parseInt(ss.noRiskPct);
+    const riskPct = 100 - nrPct;
+    segMatrixHtml += `<div class="seg-matrix-card">
+      <div class="sm-header">
+        <span style="width:12px;height:12px;border-radius:50%;background:${SEG_COLOR[s]};display:inline-block"></span>
+        <span class="sm-name">${SEG_LABEL[s]||s}</span>
+      </div>
+      <div class="sm-atr">${fmtAtr(ss.atr)}</div>
+      <div class="sm-sub">${ss.accts} accounts &middot; ${ss.noRiskPct}% No-Risk</div>
+      <div class="stacked-bar" style="margin-bottom:8px;height:8px">
+        <div style="width:${nrPct}%;background:#1baf7a"></div>
+        <div style="width:${riskPct}%;background:#e34948"></div>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">
+        ${topClouds.map(([cl,v])=>`<span class="cloud-chip" style="background:${CLOUD_COLOR[cl]};font-size:9.5px">${cl} ${fmtAtr(v)}</span>`).join('')}
+      </div>
+      ${ss.red>0?`<span class="count-badge red" style="margin-right:4px">${ss.red} RED</span>`:''}
+      ${ss.amber>0?`<span class="count-badge amber">${ss.amber} AMBER</span>`:''}
+    </div>`;
+  });
+  segMatrixHtml += '</div>';
+
+  // Trend cards
+  const trends = [
+    {cls:'warn',title:'Macro-Driven Business Exits',body:'Ola Electric (RIF, $2.9M), Hero MotoCorp ($1.6M shelfware), UNext (confirmed), EdTech sector macro headwinds. Core SFA concentration risk in CMI and TMTHRE.'},
+    {cls:'amber',title:'Shelfware as Leading At-Risk Indicator',body:'$560K shelf at Hero MotoCorp, $318K at Homefirst, $175K at Razorpay. Shelf% >30% correlates strongly with RED/AMBER status across segments.'},
+    {cls:'warn',title:'Heroku EOS: Structural TMTHRE Exposure',body:'Alembic Pharmaceuticals ($455K) and Honda ($252K) carry Heroku EOS risk. End-of-support timeline creates contractual friction across TMTHRE and CMI.'},
+    {cls:'warn',title:'MuleSoft Contractual Friction',body:'Maruti Suzuki $1.3M AMBER (WhatsApp/contractual). Non-Core MuleSoft accounts showing pricing friction and renewal uncertainty in CMI.'},
+    {cls:'amber',title:'Mktg Cloud: WhatsApp Pricing CMI',body:'Lifestyle International ($331K) + BIBA Fashion ($282K) = $613K AMBER. WhatsApp pricing model driving resistance to renewal across fashion/retail vertical.'},
+    {cls:'info',title:'Tableau as Non-Core Entry Vehicle',body:'Tableau accounts dominate Non-Core dataset (IDFC $1.3M, Jio $2M). Strong green health overall but government contracts carry single-year project risk.'},
+    {cls:'info',title:'Government Contracts: One-Year Risk',body:'GSTN ($315K), CAG ($184K), DoIT&C Rajasthan ($133K) — all Tableau, project-based contracts with explicit attrition risk noted. Mar-Jan 2027 closes.'},
+    {cls:'good',title:'FINS: Strong Foundation, Two Confirmed Losses',body:'FINS 72% No-Risk ATR, Kotak ($6.7M) and Axis Bank anchoring portfolio. HDFC Bank ($1.8M, inhouse) and Pine Labs ($955K, competition) are confirmed exits.'},
+    {cls:'amber',title:'Q1 FY28 Close Urgency Feb–May 2027',body:'Large cohort of renewals close Feb-May 2027. Early renewal conversations must begin now — L&T Finance, Pine Labs, IDFC FIRST, Hero FinCorp, YES Bank among key accounts.'}
+  ];
+
+  let trendHtml = '<div class="trend-grid">';
+  trends.forEach(t=>{
+    trendHtml += `<div class="trend-card ${t.cls}"><div class="trend-title">${t.title}</div><div class="trend-body">${t.body}</div></div>`;
+  });
+  trendHtml += '</div>';
+
+  pane.innerHTML = `
+    <div class="section-title" style="margin-top:0">KPI Overview</div>
+    <div class="kpi-strip">
+      <div class="kpi-tile"><div class="kpi-label">Combined ATR</div><div class="kpi-val">${fmtAtr(totalAtr)}</div><div class="kpi-sub">${allAccts.length} total accounts</div></div>
+      <div class="kpi-tile"><div class="kpi-label">No-Risk ATR</div><div class="kpi-val" style="color:var(--good)">${fmtAtr(noRiskAtr)}</div><div class="kpi-sub">${noRiskPct}% of portfolio</div></div>
+      <div class="kpi-tile"><div class="kpi-label">At-Risk ATR</div><div class="kpi-val" style="color:#e34948">${fmtAtr(atRiskAtr)}</div><div class="kpi-sub">${atRiskPct}% of portfolio</div></div>
+      <div class="kpi-tile"><div class="kpi-label">RED Accounts ATR</div><div class="kpi-val" style="color:#d03b3b">${fmtAtr(redAtr)}</div><div class="kpi-sub">${allAccts.filter(a=>a.rag==='RED').length} red accounts</div></div>
+      <div class="kpi-tile"><div class="kpi-label">AMBER Accounts ATR</div><div class="kpi-val" style="color:#7a5800">${fmtAtr(amberAtr)}</div><div class="kpi-sub">${allAccts.filter(a=>a.rag==='AMBER').length} amber accounts</div></div>
+      <div class="kpi-tile"><div class="kpi-label">Biz Change Risk</div><div class="kpi-val" style="color:#e34948">${fmtAtr(bizChgAtr)}</div><div class="kpi-sub">Business exits &amp; RIFs</div></div>
+      <div class="kpi-tile"><div class="kpi-label">Adoption Risk</div><div class="kpi-val" style="color:#eda100">${fmtAtr(adoptAtr)}</div><div class="kpi-sub">Shelfware-driven</div></div>
+    </div>
+
+    <div class="section-title">Product Portfolio Mix</div>
+    <div class="portfolio-bar-wrap">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Portfolio ATR by Cloud Product (Combined)</div>
+      <div class="portfolio-bar" style="height:32px">${pbHtml}</div>
+      <div class="legend-chips">${legendHtml}</div>
+    </div>
+    ${cloudCardsHtml}
+
+    <div class="section-title">Cloud &times; Segment ATR Heatmap</div>
+    ${hmHtml}
+
+    <div class="section-title">Headline Narrative</div>
+    <div class="narrative-card">
+      <p><strong>Portfolio overview:</strong> India FY28 renewal portfolio spans ${fmtAtr(totalAtr)} across ${allAccts.length} accounts from FINS, CMI, TMTHRE, and ESMB segments. The overall portfolio shows <strong>${noRiskPct}% no-risk ATR (${fmtAtr(noRiskAtr)})</strong>, a healthy baseline driven by Core SFA and Tableau renewals. At-risk exposure stands at ${fmtAtr(atRiskAtr)} (${atRiskPct}%), with RED accounts representing ${fmtAtr(redAtr)} of hard-risk concentration.</p>
+      <p><strong>Product lens:</strong> Core SFA is the dominant cloud and the safest bucket — large enterprise relationships with healthy adoption metrics anchor FINS and CMI. Tableau is the primary Non-Core entry vehicle with strong usage but government-contract and EOS tail risk. MuleSoft faces contractual friction (Maruti Suzuki $1.3M AMBER). Marketing Cloud has WhatsApp pricing pressure in CMI retail (Lifestyle + BIBA, ~$613K).</p>
+      <p><strong>Segment lens:</strong> FINS is the strongest performer with Kotak ($6.7M) and Axis Bank anchoring, though HDFC ($1.8M inhouse migration) and Pine Labs ($955K, competition) are confirmed exits. CMI carries highest concentration risk — Ola Electric ($2.9M RIF) and Hero MotoCorp ($1.6M shelfware) are the two largest red accounts in the portfolio. TMTHRE has broad breadth but Heroku EOS exposure, EdTech volatility (Simplilearn, UNext), and Tableau government contracts create a layered risk profile.</p>
+      <p><strong>Shelfware cross-cut:</strong> Shelfware above 30% is a reliable leading indicator of RED/AMBER risk — Hero MotoCorp (56%), Au Small Finance Bank (69%), Ola Electric (38%), Homefirst (21%), Razorpay Tableau (100%). Early engagement on license swap, rightsizing, or Signature success plans is the primary lever to protect these accounts ahead of FY28 close windows.</p>
+    </div>
+
+    <div class="section-title">Segment Health Matrix</div>
+    ${segMatrixHtml}
+
+    <div class="section-title">RED Hotspots — Top 12 by ATR</div>
+    ${redTableHtml}
+
+    <div class="section-title">AMBER Watch List — Top 12 by ATR</div>
+    ${amberTableHtml}
+
+    <div class="section-title">Emerging Trends &amp; Themes</div>
+    ${trendHtml}
+  `;
+}
+// ---- INIT ----
+const p0=document.getElementById('pane-0');
+const p1=document.getElementById('pane-1');
+const p2=document.getElementById('pane-2');
+const p3=document.getElementById('pane-3');
+renderExecSummary(p0);
+renderTab(TAB1, p1, '≥$200K');
+renderTab(TAB2, p2, '≥$100K');
+renderProductTab(p3);
+document.getElementById('tc1').textContent = TAB1.reduce((a,s)=>a+s.total_count,0);
+document.getElementById('tc2').textContent = TAB2.reduce((a,s)=>a+s.total_count,0);
+document.getElementById('tc3').textContent = TAB1.reduce((a,s)=>a+s.total_count,0) + TAB2.reduce((a,s)=>a+s.total_count,0);
+</script>
+</body>
+</html>
