@@ -931,6 +931,7 @@ function switchTab(n, btn) {
 function renderExecSummary(pane) {
   const ALL = [...TAB1, ...TAB2.map(s => ({...s, _noncore: true}))];
   const SEGS = ['FINS','CMI','TMTHRE','ESMB'];
+  const allAccounts = ALL.flatMap(seg => seg.attrition_groups.flatMap(g => g.accounts.map(a => ({...a, segment:seg.segment, reason:g.reason}))));
 
   // Combined totals
   let totalAtr=0, noRiskAtr=0, atRiskAtr=0, redAtr=0, amberAtr=0;
@@ -1031,11 +1032,46 @@ function renderExecSummary(pane) {
   }
 
   // Segment cards
+  // ── Product / cloud analytics ──────────────────────────────────────────────
+  // Full portfolio cloud breakdown
+  const allCloud = cloudBreakdown(allAccounts);
+  const noRiskCloud = cloudBreakdown(allAccounts.filter(a=>a.reason==='No Risk'));
+  const atRiskCloud = cloudBreakdown(allAccounts.filter(a=>a.reason!=='No Risk'));
+
+  // Per-cloud health: no-risk%, at-risk ATR, RED count
+  const cloudHealth = {};
+  CLOUD_ORDER.forEach(c => {
+    const accts = allAccounts.filter(a=>normalizeCloud(a.cloud)===c);
+    if (!accts.length) return;
+    const totalC = accts.reduce((s,a)=>s+a.atr,0);
+    const noRiskC = accts.filter(a=>a.reason==='No Risk').reduce((s,a)=>s+a.atr,0);
+    const redC    = accts.filter(a=>a.rag==='RED' && a.reason!=='No Risk').reduce((s,a)=>s+a.atr,0);
+    const amberC  = accts.filter(a=>a.rag==='AMBER' && a.reason!=='No Risk').reduce((s,a)=>s+a.atr,0);
+    const redCount = accts.filter(a=>a.rag==='RED' && a.reason!=='No Risk').length;
+    const amberCount = accts.filter(a=>a.rag==='AMBER' && a.reason!=='No Risk').length;
+    cloudHealth[c] = { total:totalC, noRisk:noRiskC, atRisk:totalC-noRiskC, red:redC, amber:amberC, redCount, amberCount, nrPct:noRiskC/totalC };
+  });
+
+  // Per-cloud per-segment breakdown for the heatmap
+  const cloudSegMatrix = {};
+  CLOUD_ORDER.forEach(c => { cloudSegMatrix[c] = {}; SEGS.forEach(s => { cloudSegMatrix[c][s]=0; }); });
+  allAccounts.forEach(a => {
+    const c = normalizeCloud(a.cloud);
+    const s = a.segment;
+    if (cloudSegMatrix[c] && s) cloudSegMatrix[c][s] = (cloudSegMatrix[c][s]||0) + a.atr;
+  });
+
+  // Segment health matrix cards (built here so cloudSegMatrix is available)
   const segCards = SEGS.filter(s=>segMap[s]).map(s => {
     const seg = segMap[s];
     const nr = seg.attrition_groups.find(g=>g.reason==='No Risk');
     const nrPct = nr ? nr.atr/seg.totalAtr : 0;
     const color = SEG_COLOR[s]||'#999';
+    // top cloud products for this segment
+    const segCloudMap = {};
+    CLOUD_ORDER.forEach(c => { if (cloudSegMatrix[c]&&cloudSegMatrix[c][s]) segCloudMap[c]=cloudSegMatrix[c][s]; });
+    const topClouds = Object.entries(segCloudMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const cloudChips = topClouds.map(([c,v])=>`<span class="cloud-chip" style="background:${CLOUD_COLOR[c]||'#999'};font-size:9px" title="${fmtAtr(v)}">${c}</span>`).join('');
     return `
     <div class="seg-matrix-card">
       <div class="seg-matrix-header" style="background:${color}18;border-bottom:1px solid ${color}30;">
@@ -1058,6 +1094,7 @@ function renderExecSummary(pane) {
           </div>
         </div>
         <div class="mini-bar-wrap">${segHealthBar(seg)}</div>
+        ${topClouds.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 4px">${cloudChips}</div>`:''}
         <div class="seg-matrix-footer">${segRiskTags(seg)}</div>
       </div>
     </div>`;
@@ -1065,13 +1102,14 @@ function renderExecSummary(pane) {
 
   // Hotspot rows
   function hotspotRow(a, idx) {
-    const ragColor = a.rag==='RED'?'var(--critical)':a.rag==='AMBER'?'#eda100':'var(--good)';
     const segColor = SEG_COLOR[a.segment]||'#999';
+    const cn = normalizeCloud(a.cloud);
+    const ccol = CLOUD_COLOR[cn]||'#999';
     return `<tr>
       <td style="color:var(--text-muted);font-size:11px;font-variant-numeric:tabular-nums">${idx+1}</td>
       <td><div class="ht-account">${a.name}</div></td>
       <td><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;background:${segColor}20;color:${segColor}">${a.segment}</span></td>
-      <td><span class="acct-cloud">${a.cloud}</span></td>
+      <td><span class="cloud-chip" style="background:${ccol};font-size:9.5px">${cn}</span></td>
       <td class="ht-atr">${fmtAtr(a.atr)}</td>
       <td><span class="rag-badge ${a.rag||'NA'}">${a.rag||'—'}</span></td>
       <td><span style="font-size:10.5px;font-weight:600;color:${REASON_COLOR[a.reason]||'#999'}">${a.reason}</span></td>
@@ -1107,6 +1145,132 @@ function renderExecSummary(pane) {
     g.accounts.filter(a=>(a.comments||'').toLowerCase().includes('heroku') || (a.comments||'').toLowerCase().includes('eos'))
   ));
   const herokuAtr = herokuAccounts.reduce((s,a)=>s+a.atr,0);
+
+  // ── Product section HTML ────────────────────────────────────────────────────
+  // Big stacked bar: total portfolio by cloud
+  const portfolioCloudBar = CLOUD_ORDER.filter(c=>allCloud[c]).map(c => {
+    const w = (allCloud[c]/totalAtr*100).toFixed(2);
+    const col = CLOUD_COLOR[c];
+    const lbl = w > 7 ? c : '';
+    return `<div class="bar-seg" style="width:${w}%;background:${col};"
+      onmouseenter="showTip(event,'<div class=\\'tt-reason\\'>${c}</div><div class=\\'tt-val\\'>${fmtAtr(allCloud[c])} · ${fmtPct(allCloud[c]/totalAtr)} of portfolio</div>')"
+      onmouseleave="hideTip()">
+      ${lbl?`<span class="bar-label">${lbl}</span>`:''}
+    </div>`;
+  }).join('');
+
+  // Per-cloud health cards
+  const cloudCards = CLOUD_ORDER.filter(c=>cloudHealth[c]).map(c => {
+    const h = cloudHealth[c];
+    const col = CLOUD_COLOR[c];
+    const nrPctBar = (h.nrPct*100).toFixed(1);
+    const atRiskPctBar = ((1-h.nrPct)*100).toFixed(1);
+    // segment chips for this cloud
+    const segChips = SEGS.filter(s=>cloudSegMatrix[c][s]>0)
+      .sort((a,b)=>cloudSegMatrix[c][b]-cloudSegMatrix[c][a])
+      .map(s=>`<span style="font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;background:${SEG_COLOR[s]}20;color:${SEG_COLOR[s]};border:1px solid ${SEG_COLOR[s]}40">${s}</span>`)
+      .join('');
+    return `
+    <div style="background:var(--card);border:1px solid ${col}40;border-top:3px solid ${col};border-radius:8px;padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="cloud-chip" style="background:${col};font-size:11px;padding:3px 10px">${c}</span>
+        <div style="margin-left:auto;display:flex;gap:6px">${segChips}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:${col}">${fmtAtr(h.total)}</div>
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">Total ATR</div>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--good)">${fmtPct(h.nrPct)}</div>
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">No Risk</div>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:${h.atRisk>0?'var(--critical)':'var(--good)'}">${fmtAtr(h.atRisk)}</div>
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">At Risk</div>
+        </div>
+      </div>
+      <div style="height:7px;border-radius:4px;background:var(--page);overflow:hidden;display:flex;gap:1px;margin-bottom:8px;">
+        <div style="width:${nrPctBar}%;background:var(--good);border-radius:3px;"></div>
+        ${h.red>0?`<div style="width:${(h.red/h.total*100).toFixed(1)}%;background:var(--critical);border-radius:3px;"></div>`:''}
+        ${h.amber>0?`<div style="width:${(h.amber/h.total*100).toFixed(1)}%;background:#eda100;border-radius:3px;"></div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${h.redCount>0?`<span style="font-size:10px;font-weight:700;background:#fde8e8;color:var(--critical);padding:2px 6px;border-radius:3px;">🔴 ${h.redCount} RED · ${fmtAtr(h.red)}</span>`:''}
+        ${h.amberCount>0?`<span style="font-size:10px;font-weight:700;background:#fef5e0;color:#7a5800;padding:2px 6px;border-radius:3px;">🟡 ${h.amberCount} AMBER · ${fmtAtr(h.amber)}</span>`:''}
+        ${h.redCount===0&&h.amberCount===0?`<span style="font-size:10px;font-weight:700;background:#e8f7f1;color:#006b40;padding:2px 6px;border-radius:3px;">✓ All No Risk</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Cloud × Segment heatmap table
+  const heatmapClouds = CLOUD_ORDER.filter(c=>allCloud[c]);
+  const heatmapSegs   = SEGS.filter(s=>Object.values(cloudSegMatrix).some(m=>m[s]>0));
+  const maxCell = Math.max(...heatmapClouds.flatMap(c=>heatmapSegs.map(s=>cloudSegMatrix[c][s]||0)));
+  const heatmapRows = heatmapClouds.map(c => {
+    const col = CLOUD_COLOR[c];
+    const cells = heatmapSegs.map(s => {
+      const v = cloudSegMatrix[c][s]||0;
+      if (!v) return `<td style="padding:8px 12px;border-bottom:1px solid var(--grid);color:var(--text-muted);font-size:11px;text-align:right;">—</td>`;
+      const intensity = Math.round((v/maxCell)*100);
+      const bg = `${col}${intensity < 15 ? '15' : intensity < 35 ? '28' : intensity < 60 ? '45' : '70'}`;
+      // at-risk portion for this cloud+seg
+      const segAtRisk = allAccounts.filter(a=>normalizeCloud(a.cloud)===c && a.segment===s && a.reason!=='No Risk').reduce((sum,a)=>sum+a.atr,0);
+      const segRed    = allAccounts.filter(a=>normalizeCloud(a.cloud)===c && a.segment===s && a.rag==='RED' && a.reason!=='No Risk').length;
+      const tooltip_  = `${c} · ${s}: ${fmtAtr(v)} total${segAtRisk?', '+fmtAtr(segAtRisk)+' at risk':''}${segRed?' · '+segRed+' RED':''}`;
+      return `<td style="padding:8px 12px;border-bottom:1px solid var(--grid);background:${bg};text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;"
+        onmouseenter="showTip(event,'<div class=\\'tt-reason\\'>${c} × ${s}</div><div class=\\'tt-val\\'>${fmtAtr(v)} total${segAtRisk?' · '+fmtAtr(segAtRisk)+' at risk':''}${segRed?' · '+segRed+' RED acct':''}</div>')"
+        onmouseleave="hideTip()">
+        <div style="font-size:12.5px;font-weight:700;color:${col}">${fmtAtr(v)}</div>
+        ${segAtRisk>0?`<div style="font-size:10px;color:var(--critical)">${fmtAtr(segAtRisk)} risk</div>`:'<div style="font-size:10px;color:var(--good)">✓</div>'}
+      </td>`;
+    }).join('');
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--grid);white-space:nowrap;">
+        <span class="cloud-chip" style="background:${col};font-size:9.5px">${c}</span>
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--grid);font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${fmtAtr(allCloud[c])}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--grid);color:${cloudHealth[c].nrPct>=0.7?'var(--good)':cloudHealth[c].nrPct>=0.5?'var(--text-1)':'var(--critical)'};font-weight:700">${fmtPct(cloudHealth[c].nrPct)}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  const heatmapSegHeaders = heatmapSegs.map(s=>`<th style="text-align:right;padding:8px 12px"><span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:3px;background:${SEG_COLOR[s]}20;color:${SEG_COLOR[s]}">${s}</span></th>`).join('');
+
+  const productSection = `
+  <div class="exec-section">
+    <div class="exec-section-title">Product Portfolio Mix — Combined Core + Non-Core</div>
+
+    <!-- Portfolio bar -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="padding:12px 20px 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Total ATR ${fmtAtr(totalAtr)} — split by cloud product</div>
+      <div style="padding:0 20px 16px;">
+        <div class="stacked-bar" style="height:32px">${portfolioCloudBar}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;">
+          ${CLOUD_ORDER.filter(c=>allCloud[c]).map(c=>`<div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-2)"><span class="cloud-chip" style="background:${CLOUD_COLOR[c]};font-size:9px">${c}</span><span style="font-weight:600">${fmtAtr(allCloud[c])}</span><span style="color:var(--text-muted)">${fmtPct(allCloud[c]/totalAtr)}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-cloud health cards -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">${cloudCards}</div>
+
+    <!-- Cloud × Segment heatmap -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="padding:10px 20px 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);">Cloud × Segment ATR Heatmap</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <thead><tr style="background:#fafaf9;">
+            <th style="text-align:left;padding:8px 12px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Cloud</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Total ATR</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">No Risk %</th>
+            ${heatmapSegHeaders}
+          </tr></thead>
+          <tbody>${heatmapRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
 
   pane.innerHTML = `
   <!-- KPI STRIP -->
@@ -1148,6 +1312,9 @@ function renderExecSummary(pane) {
     </div>
   </div>
 
+  <!-- PRODUCT PORTFOLIO MIX -->
+  ${productSection}
+
   <!-- HEADLINE NARRATIVE -->
   <div class="exec-section">
     <div class="exec-section-title">Headline Narrative</div>
@@ -1155,6 +1322,17 @@ function renderExecSummary(pane) {
       <p>India's FY28 renewal portfolio spans <strong>${fmtAtr(totalAtr)}</strong> ATR across <strong>${totalCount} accounts</strong> (${TAB1.reduce((a,s)=>a+s.total_count,0)} Top + ${TAB2.reduce((a,s)=>a+s.total_count,0)} Non-Core).
       <span class="hl-green">${fmtPct(noRiskPct)} of the portfolio (${fmtAtr(noRiskAtr)}) is rated No Risk</span>, underpinned by strong Core SFA and Tableau adoption across FINS and TMTHRE.
       The remaining <span class="hl-red">${fmtAtr(atRiskAtr)} (${fmtPct(atRiskPct)})</span> carries active risk signals requiring executive attention before close.</p>
+
+      <p><strong>Product mix:</strong>
+      <span class="cloud-chip" style="background:${CLOUD_COLOR['Core SFA']};font-size:10px">Core SFA</span> dominates at
+      <strong>${fmtAtr(allCloud['Core SFA']||0)} (${fmtPct((allCloud['Core SFA']||0)/totalAtr)})</strong> — the safest bucket with strong FINS/TMTHRE penetration.
+      <span class="cloud-chip" style="background:${CLOUD_COLOR['Tableau']};font-size:10px">Tableau</span> at
+      <strong>${fmtAtr(allCloud['Tableau']||0)}</strong> is primarily a Non-Core play and carries
+      <span class="hl-amber">elevated standalone renewal risk where no adjacent cloud is attached</span>.
+      <span class="cloud-chip" style="background:${CLOUD_COLOR['MuleSoft']};font-size:10px">MuleSoft</span> at
+      <strong>${fmtAtr(allCloud['MuleSoft']||0)}</strong> shows the highest at-risk concentration — Maruti Suzuki ($1.3M, AMBER) and DLF ($504K, RED) are the primary concerns.
+      <span class="cloud-chip" style="background:${CLOUD_COLOR['Mktg Cloud']};font-size:10px">Mktg Cloud</span> at
+      <strong>${fmtAtr(allCloud['Mktg Cloud']||0)}</strong> is under pressure from <span class="hl-red">WhatsApp pricing changes</span> impacting CMI Non-Core accounts.</p>
 
       <p><strong>FINS is the largest segment at ${fmtAtr(segMap['FINS']?.totalAtr||0)}</strong> combined and shows the strongest health — Kotak Mahindra Bank ($6.7M) anchors a clean GREEN book, though <span class="hl-red">HDFC Bank ($1.8M) confirming an in-house migration and Pine Labs ($1.0M) moving to competition</span> represent the sharpest immediate losses in the portfolio.</p>
 
@@ -1272,6 +1450,34 @@ function renderExecSummary(pane) {
           <strong>Tableau is the entry product for non-core expansion</strong>, but renewal risk is highest
           for standalone Tableau accounts with no adjacent cloud attach. Cross-sell motions
           (MuleSoft, MC) in these accounts would significantly strengthen renewal health.
+        </div>
+      </div>
+
+      <div class="trend-card warn">
+        <div class="trend-icon">🔗</div>
+        <div class="trend-title">MuleSoft: Contractual Friction as the Risk Driver</div>
+        <div class="trend-body">
+          <span class="cloud-chip" style="background:${CLOUD_COLOR['MuleSoft']};font-size:10px">MuleSoft</span>
+          represents <strong>${fmtAtr(allCloud['MuleSoft']||0)}</strong> ATR with an elevated at-risk share.
+          <strong>Maruti Suzuki ($1.3M, AMBER)</strong> cites MuleSoft pricing as the driver;
+          <strong>DLF ($504K, RED)</strong> lists Financial &amp; Contractual as the reason.
+          Unlike adoption risk, contractual friction is recoverable with commercial intervention —
+          a <strong>dedicated MuleSoft value play and contract renegotiation</strong> for these accounts
+          is the recommended action before Q3 close.
+        </div>
+      </div>
+
+      <div class="trend-card amber">
+        <div class="trend-icon">📣</div>
+        <div class="trend-title">Mktg Cloud: WhatsApp Pricing Threatening CMI Non-Core</div>
+        <div class="trend-body">
+          <span class="cloud-chip" style="background:${CLOUD_COLOR['Mktg Cloud']};font-size:10px">Mktg Cloud</span>
+          at <strong>${fmtAtr(allCloud['Mktg Cloud']||0)}</strong> total ATR faces a structural pricing headwind.
+          <strong>Lifestyle International ($331K) and BIBA Fashion ($282K)</strong> — both CMI Non-Core AMBER —
+          explicitly cite <strong>WhatsApp pricing changes as the attrition trigger</strong>.
+          This is a packaging issue, not a platform satisfaction issue.
+          A bundled WhatsApp pricing concession or alternative messaging channel offer
+          would recover <strong>$613K</strong> at risk and protect the segment's Mktg Cloud base.
         </div>
       </div>
 
