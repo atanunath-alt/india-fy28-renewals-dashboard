@@ -395,6 +395,112 @@ body {
 #tooltip .tt-reason { font-weight: 700; margin-bottom: 2px; }
 #tooltip .tt-val { color: #c3c2b7; }
 
+/* ─── EXEC SUMMARY ─── */
+.exec-section { margin-bottom: 28px; }
+.exec-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.exec-section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Narrative card */
+.narrative-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 22px 26px; line-height: 1.75;
+}
+.narrative-card p { color: var(--text-2); font-size: 13.5px; margin-bottom: 10px; }
+.narrative-card p:last-child { margin-bottom: 0; }
+.narrative-card strong { color: var(--text-1); }
+.narrative-card .hl-green { color: #006b40; font-weight: 600; }
+.narrative-card .hl-red { color: var(--critical); font-weight: 600; }
+.narrative-card .hl-amber { color: #7a5800; font-weight: 600; }
+
+/* Combined KPI strip */
+.exec-kpi-strip {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 28px;
+}
+.exec-kpi {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px;
+}
+.exec-kpi.accent-green { border-left: 3px solid var(--good); }
+.exec-kpi.accent-red   { border-left: 3px solid var(--critical); }
+.exec-kpi.accent-blue  { border-left: 3px solid var(--blue); }
+.exec-kpi .ek-label { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.exec-kpi .ek-value { font-size: 19px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.exec-kpi .ek-sub   { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+.exec-kpi.accent-green .ek-value { color: var(--good); }
+.exec-kpi.accent-red   .ek-value { color: var(--critical); }
+
+/* Segment health matrix */
+.seg-matrix {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.seg-matrix-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.seg-matrix-header {
+  padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+}
+.seg-matrix-pill {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 3px; color: #fff;
+}
+.seg-matrix-name { font-size: 11px; color: var(--text-2); font-weight: 500; }
+.seg-matrix-body { padding: 12px 14px 14px; }
+.seg-matrix-kpis { display: flex; gap: 16px; margin-bottom: 10px; }
+.seg-matrix-kpi .smk-val { font-size: 15px; font-weight: 700; }
+.seg-matrix-kpi .smk-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.mini-bar-wrap { height: 8px; border-radius: 3px; background: var(--page); overflow: hidden; display: flex; gap: 1px; }
+.mini-bar-seg { height: 100%; border-radius: 2px; }
+.seg-matrix-footer { margin-top: 8px; font-size: 11px; color: var(--text-2); }
+.seg-matrix-footer .risk-tag {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 6px; border-radius: 3px; margin-right: 4px; margin-top: 3px;
+}
+.risk-tag.r { background: #fde8e8; color: var(--critical); }
+.risk-tag.a { background: #fef5e0; color: #7a5800; }
+.risk-tag.g { background: #e8f7f1; color: #006b40; }
+
+/* Hotspot table */
+.hotspot-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.hotspot-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.hotspot-table th {
+  text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted); padding: 10px 14px;
+  border-bottom: 1px solid var(--border); background: #fafaf9; white-space: nowrap;
+}
+.hotspot-table td { padding: 10px 14px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+.hotspot-table tr:last-child td { border-bottom: none; }
+.hotspot-table tr:hover td { background: #f8f8f6; }
+.ht-account { font-weight: 600; }
+.ht-atr { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ht-comment { font-size: 11.5px; color: var(--text-2); }
+.severity-dot {
+  width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+}
+
+/* Trend cards */
+.trends-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.trend-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px;
+}
+.trend-icon { font-size: 20px; margin-bottom: 8px; }
+.trend-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin-bottom: 6px; }
+.trend-body { font-size: 12.5px; color: var(--text-2); line-height: 1.6; }
+.trend-body strong { color: var(--text-1); }
+.trend-card.warn { border-left: 3px solid var(--critical); }
+.trend-card.info { border-left: 3px solid var(--blue); }
+.trend-card.good { border-left: 3px solid var(--good); }
+.trend-card.amber { border-left: 3px solid var(--warning); }
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
   .summary-strip { grid-template-columns: repeat(3, 1fr); }
@@ -422,7 +528,10 @@ body {
 </header>
 
 <nav class="tab-nav" role="tablist">
-  <button class="tab-btn active" role="tab" onclick="switchTab(1, this)" id="tab-btn-1">
+  <button class="tab-btn active" role="tab" onclick="switchTab(0, this)" id="tab-btn-0">
+    ★ Executive Summary
+  </button>
+  <button class="tab-btn" role="tab" onclick="switchTab(1, this)" id="tab-btn-1">
     Top Accounts
     <span class="tab-count" id="tc1"></span>
   </button>
@@ -432,7 +541,8 @@ body {
   </button>
 </nav>
 
-<div class="tab-pane active" id="pane-1" role="tabpanel"></div>
+<div class="tab-pane active" id="pane-0" role="tabpanel"></div>
+<div class="tab-pane" id="pane-1" role="tabpanel"></div>
 <div class="tab-pane" id="pane-2" role="tabpanel"></div>
 
 <script>
@@ -677,9 +787,386 @@ function switchTab(n, btn) {
   document.getElementById(`pane-${n}`).classList.add('active');
 }
 
+// ─── EXEC SUMMARY ────────────────────────────────────────────────────────────
+function renderExecSummary(pane) {
+  const ALL = [...TAB1, ...TAB2.map(s => ({...s, _noncore: true}))];
+  const SEGS = ['FINS','CMI','TMTHRE','ESMB'];
+
+  // Combined totals
+  let totalAtr=0, noRiskAtr=0, atRiskAtr=0, redAtr=0, amberAtr=0;
+  let totalCount=0, noRiskCount=0, redCount=0, amberCount=0;
+  const reasonAtr = {};
+  ALL.forEach(seg => {
+    totalAtr += seg.total_atr; totalCount += seg.total_count;
+    seg.attrition_groups.forEach(g => {
+      reasonAtr[g.reason] = (reasonAtr[g.reason]||0) + g.atr;
+      if (g.reason==='No Risk') { noRiskAtr += g.atr; noRiskCount += g.count; }
+      else { atRiskAtr += g.atr; }
+      Object.entries(g.rag_counts).forEach(([k,v]) => {
+        if (k==='RED')   { redAtr   += g.accounts.filter(a=>a.rag==='RED').reduce((s,a)=>s+a.atr,0); redCount+=v; }
+        if (k==='AMBER') { amberAtr += g.accounts.filter(a=>a.rag==='AMBER').reduce((s,a)=>s+a.atr,0); amberCount+=v; }
+      });
+    });
+  });
+  const noRiskPct  = noRiskAtr/totalAtr;
+  const atRiskPct  = atRiskAtr/totalAtr;
+
+  // Per-segment combined
+  const segMap = {};
+  ALL.forEach(seg => {
+    const k = seg.segment;
+    if (!segMap[k]) segMap[k] = {segment:k, totalAtr:0, totalCount:0, attrition_groups:[]};
+    segMap[k].totalAtr   += seg.total_atr;
+    segMap[k].totalCount += seg.total_count;
+    seg.attrition_groups.forEach(g => {
+      const ex = segMap[k].attrition_groups.find(x=>x.reason===g.reason);
+      if (ex) { ex.atr+=g.atr; ex.count+=g.count;
+        Object.entries(g.rag_counts).forEach(([rk,rv])=>{ ex.rag_counts[rk]=(ex.rag_counts[rk]||0)+rv; });
+        ex.accounts=[...ex.accounts,...g.accounts];
+      } else {
+        segMap[k].attrition_groups.push({...g, accounts:[...g.accounts], rag_counts:{...g.rag_counts}});
+      }
+    });
+  });
+
+  // Top RED hotspots across both tabs
+  const allReds = [];
+  ALL.forEach(seg => {
+    seg.attrition_groups.forEach(g => {
+      g.accounts.forEach(a => {
+        if (a.rag==='RED' && a.atr > 0)
+          allReds.push({...a, segment:seg.segment, reason:g.reason});
+      });
+    });
+  });
+  allReds.sort((a,b)=>b.atr-a.atr);
+  const topReds = allReds.slice(0,10);
+
+  // Top AMBER hotspots
+  const allAmbers = [];
+  ALL.forEach(seg => {
+    seg.attrition_groups.forEach(g => {
+      g.accounts.forEach(a => {
+        if (a.rag==='AMBER' && a.atr > 0)
+          allAmbers.push({...a, segment:seg.segment, reason:g.reason});
+      });
+    });
+  });
+  allAmbers.sort((a,b)=>b.atr-a.atr);
+  const topAmbers = allAmbers.slice(0,8);
+
+  // Shelfware watch (shelf_pct >= 0.3 at risk accounts)
+  const highShelf = [];
+  ALL.forEach(seg => {
+    seg.attrition_groups.forEach(g => {
+      if (g.reason==='No Risk') return;
+      g.accounts.forEach(a => {
+        if (a.shelf_pct >= 0.3) highShelf.push({...a, segment:seg.segment, reason:g.reason});
+      });
+    });
+  });
+  highShelf.sort((a,b)=>b.atr-a.atr);
+
+  // Reason breakdown for mini bar
+  const reasonOrder = ['No Risk','Adoption','Business Change and Distress','Financial & Contractual','Implementation','Unknown'];
+
+  function segHealthBar(seg) {
+    return reasonOrder.map(r => {
+      const g = seg.attrition_groups.find(x=>x.reason===r);
+      if (!g) return '';
+      const w = (g.atr/seg.totalAtr*100).toFixed(1);
+      return `<div class="mini-bar-seg" style="width:${w}%;background:${REASON_COLOR[r]||'#ccc'};flex-shrink:0;min-width:2px"></div>`;
+    }).join('');
+  }
+
+  function segRiskTags(seg) {
+    const red = seg.attrition_groups.filter(g=>g.reason!=='No Risk').flatMap(g=>g.accounts).filter(a=>a.rag==='RED');
+    const amb = seg.attrition_groups.filter(g=>g.reason!=='No Risk').flatMap(g=>g.accounts).filter(a=>a.rag==='AMBER');
+    const noCov = seg.attrition_groups.filter(g=>g.reason!=='No Risk').flatMap(g=>g.accounts).filter(a=>!a.rag);
+    let out = '';
+    if (red.length) out+=`<span class="risk-tag r">🔴 ${red.length} RED — ${fmtAtr(red.reduce((s,a)=>s+a.atr,0))}</span>`;
+    if (amb.length) out+=`<span class="risk-tag a">🟡 ${amb.length} AMBER — ${fmtAtr(amb.reduce((s,a)=>s+a.atr,0))}</span>`;
+    if (noCov.length) out+=`<span class="risk-tag a">⚪ ${noCov.length} unrated</span>`;
+    return out || `<span class="risk-tag g">✓ All GREEN</span>`;
+  }
+
+  // Segment cards
+  const segCards = SEGS.filter(s=>segMap[s]).map(s => {
+    const seg = segMap[s];
+    const nr = seg.attrition_groups.find(g=>g.reason==='No Risk');
+    const nrPct = nr ? nr.atr/seg.totalAtr : 0;
+    const color = SEG_COLOR[s]||'#999';
+    return `
+    <div class="seg-matrix-card">
+      <div class="seg-matrix-header" style="background:${color}18;border-bottom:1px solid ${color}30;">
+        <span class="seg-matrix-pill" style="background:${color}">${s}</span>
+        <span class="seg-matrix-name">${SEG_LABEL[s]||s}</span>
+      </div>
+      <div class="seg-matrix-body">
+        <div class="seg-matrix-kpis">
+          <div class="seg-matrix-kpi">
+            <div class="smk-val">${fmtAtr(seg.totalAtr)}</div>
+            <div class="smk-lbl">Total ATR</div>
+          </div>
+          <div class="seg-matrix-kpi">
+            <div class="smk-val">${seg.totalCount}</div>
+            <div class="smk-lbl">Accounts</div>
+          </div>
+          <div class="seg-matrix-kpi">
+            <div class="smk-val" style="color:${nrPct>=0.7?'var(--good)':nrPct>=0.5?'var(--text-1)':'var(--critical)'}">${fmtPct(nrPct)}</div>
+            <div class="smk-lbl">No Risk</div>
+          </div>
+        </div>
+        <div class="mini-bar-wrap">${segHealthBar(seg)}</div>
+        <div class="seg-matrix-footer">${segRiskTags(seg)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Hotspot rows
+  function hotspotRow(a, idx) {
+    const ragColor = a.rag==='RED'?'var(--critical)':a.rag==='AMBER'?'#eda100':'var(--good)';
+    const segColor = SEG_COLOR[a.segment]||'#999';
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:11px;font-variant-numeric:tabular-nums">${idx+1}</td>
+      <td><div class="ht-account">${a.name}</div></td>
+      <td><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;background:${segColor}20;color:${segColor}">${a.segment}</span></td>
+      <td><span class="acct-cloud">${a.cloud}</span></td>
+      <td class="ht-atr">${fmtAtr(a.atr)}</td>
+      <td><span class="rag-badge ${a.rag||'NA'}">${a.rag||'—'}</span></td>
+      <td><span style="font-size:10.5px;font-weight:600;color:${REASON_COLOR[a.reason]||'#999'}">${a.reason}</span></td>
+      <td class="ht-comment">${a.comments||'—'}</td>
+      <td style="color:var(--text-muted);white-space:nowrap">${a.close||'—'}</td>
+    </tr>`;
+  }
+
+  const redRows   = topReds.map((a,i)=>hotspotRow(a,i)).join('');
+  const amberRows = topAmbers.map((a,i)=>hotspotRow(a,i)).join('');
+
+  const hotspotTableHead = `<thead><tr>
+    <th>#</th><th>Account</th><th>Segment</th><th>Cloud</th><th>ATR</th><th>RAG</th><th>Reason</th><th>Comments</th><th>Close</th>
+  </tr></thead>`;
+
+  // Reason totals for trend cards
+  const bizChangeAtr = (reasonAtr['Business Change and Distress']||0);
+  const adoptionAtr  = (reasonAtr['Adoption']||0);
+  const finAtr       = (reasonAtr['Financial & Contractual']||0);
+  const implAtr      = (reasonAtr['Implementation']||0);
+
+  // Total shelfware at-risk ATR
+  const shelfAtr = highShelf.reduce((s,a)=>s+a.atr,0);
+
+  // Govt/structural accounts
+  const govtAccounts = ALL.flatMap(s=>s.attrition_groups.flatMap(g=>
+    g.accounts.filter(a=>(a.comments||'').toLowerCase().includes('govt') || (a.comments||'').toLowerCase().includes('government'))
+  ));
+  const govtAtr = govtAccounts.reduce((s,a)=>s+a.atr,0);
+
+  // Heroku EOS accounts
+  const herokuAccounts = ALL.flatMap(s=>s.attrition_groups.flatMap(g=>
+    g.accounts.filter(a=>(a.comments||'').toLowerCase().includes('heroku') || (a.comments||'').toLowerCase().includes('eos'))
+  ));
+  const herokuAtr = herokuAccounts.reduce((s,a)=>s+a.atr,0);
+
+  pane.innerHTML = `
+  <!-- KPI STRIP -->
+  <div class="exec-kpi-strip">
+    <div class="exec-kpi accent-blue">
+      <div class="ek-label">Combined Portfolio ATR</div>
+      <div class="ek-value">${fmtAtr(totalAtr)}</div>
+      <div class="ek-sub">${totalCount} accounts · Core + Non-Core</div>
+    </div>
+    <div class="exec-kpi accent-green">
+      <div class="ek-label">No-Risk ATR</div>
+      <div class="ek-value">${fmtAtr(noRiskAtr)}</div>
+      <div class="ek-sub">${noRiskCount} accts · ${fmtPct(noRiskPct)} of portfolio</div>
+    </div>
+    <div class="exec-kpi accent-red">
+      <div class="ek-label">At-Risk ATR</div>
+      <div class="ek-value">${fmtAtr(atRiskAtr)}</div>
+      <div class="ek-sub">${fmtPct(atRiskPct)} of portfolio</div>
+    </div>
+    <div class="exec-kpi accent-red">
+      <div class="ek-label">RED Accounts ATR</div>
+      <div class="ek-value">${fmtAtr(redAtr)}</div>
+      <div class="ek-sub">${redCount} accounts flagged RED</div>
+    </div>
+    <div class="exec-kpi">
+      <div class="ek-label">AMBER Accounts ATR</div>
+      <div class="ek-value" style="color:#7a5800">${fmtAtr(amberAtr)}</div>
+      <div class="ek-sub">${amberCount} accounts at watch</div>
+    </div>
+    <div class="exec-kpi">
+      <div class="ek-label">Biz Change Risk</div>
+      <div class="ek-value" style="color:var(--critical)">${fmtAtr(bizChangeAtr)}</div>
+      <div class="ek-sub">${fmtPct(bizChangeAtr/totalAtr)} · structural exits</div>
+    </div>
+    <div class="exec-kpi">
+      <div class="ek-label">Adoption Risk</div>
+      <div class="ek-value" style="color:#7a5800">${fmtAtr(adoptionAtr)}</div>
+      <div class="ek-sub">${fmtPct(adoptionAtr/totalAtr)} · shelfware-driven</div>
+    </div>
+  </div>
+
+  <!-- HEADLINE NARRATIVE -->
+  <div class="exec-section">
+    <div class="exec-section-title">Headline Narrative</div>
+    <div class="narrative-card">
+      <p>India's FY28 renewal portfolio spans <strong>${fmtAtr(totalAtr)}</strong> ATR across <strong>${totalCount} accounts</strong> (${TAB1.reduce((a,s)=>a+s.total_count,0)} Top + ${TAB2.reduce((a,s)=>a+s.total_count,0)} Non-Core).
+      <span class="hl-green">${fmtPct(noRiskPct)} of the portfolio (${fmtAtr(noRiskAtr)}) is rated No Risk</span>, underpinned by strong Core SFA and Tableau adoption across FINS and TMTHRE.
+      The remaining <span class="hl-red">${fmtAtr(atRiskAtr)} (${fmtPct(atRiskPct)})</span> carries active risk signals requiring executive attention before close.</p>
+
+      <p><strong>FINS is the largest segment at ${fmtAtr(segMap['FINS']?.totalAtr||0)}</strong> combined and shows the strongest health — Kotak Mahindra Bank ($6.7M) anchors a clean GREEN book, though <span class="hl-red">HDFC Bank ($1.8M) confirming an in-house migration and Pine Labs ($1.0M) moving to competition</span> represent the sharpest immediate losses in the portfolio.</p>
+
+      <p><strong>CMI carries the highest concentration risk</strong> — Ola Electric ($2.9M, RIF-driven) and Hero MotoCorp ($1.6M, 56% shelfware) together represent <span class="hl-red">${fmtAtr(2658217+209157+1584506)} of RED-flagged ATR</span> in a single segment. Maruti Suzuki ($1.3M AMBER, Non-Core) adds further pressure via MuleSoft contractual friction.</p>
+
+      <p><strong>TMTHRE is the broadest segment by account count</strong> (52 combined) with a healthy ${fmtPct((segMap['TMTHRE']?.attrition_groups.find(g=>g.reason==='No Risk')?.atr||0) / (segMap['TMTHRE']?.totalAtr||1))} no-risk rate, but carries <span class="hl-amber">Heroku EOS exposure (~${fmtAtr(herokuAtr)}) and EdTech macro headwinds</span> (Simplilearn, UNext — confirmed attrition) that need near-term resolution.</p>
+
+      <p><strong>Shelfware is a cross-cutting risk signal</strong>: at-risk accounts with ≥30% shelf utilisation represent <span class="hl-red">${fmtAtr(shelfAtr)} in at-risk ATR</span>. High-shelf accounts at GREEN RAG (e.g. Au Small Finance 69%, L&T Finance 42%) also warrant proactive action to protect renewal value.</p>
+    </div>
+  </div>
+
+  <!-- SEGMENT HEALTH MATRIX -->
+  <div class="exec-section">
+    <div class="exec-section-title">Segment Health — Combined Core + Non-Core</div>
+    <div class="seg-matrix">${segCards}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
+      ${Object.entries(REASON_COLOR).map(([r,c])=>`<div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-2)"><div style="width:10px;height:10px;border-radius:2px;background:${c};flex-shrink:0"></div>${r}</div>`).join('')}
+    </div>
+  </div>
+
+  <!-- RED HOTSPOTS -->
+  <div class="exec-section">
+    <div class="exec-section-title">🔴 RED Hotspots — Top Accounts by ATR at Immediate Risk</div>
+    <div class="hotspot-card">
+      <table class="hotspot-table">${hotspotTableHead}<tbody>${redRows}</tbody></table>
+    </div>
+  </div>
+
+  <!-- AMBER WATCH LIST -->
+  <div class="exec-section">
+    <div class="exec-section-title">🟡 AMBER Watch List — Top Accounts Requiring Intervention</div>
+    <div class="hotspot-card">
+      <table class="hotspot-table">${hotspotTableHead}<tbody>${amberRows}</tbody></table>
+    </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="exec-section">
+    <div class="exec-section-title">Emerging Trends & Themes</div>
+    <div class="trends-grid">
+
+      <div class="trend-card warn">
+        <div class="trend-icon">🏭</div>
+        <div class="trend-title">Macro-Driven Business Exits</div>
+        <div class="trend-body">
+          <strong>${fmtAtr(bizChangeAtr)}</strong> at risk from business change and distress — the single largest non-adoption risk category.
+          Ola Electric (RIF), Hero MotoCorp (shelfware post-expansion), UNext (EdTech macro), and Simplilearn (EdTech volatility)
+          signal that <strong>sector headwinds are outpacing platform value realization</strong>.
+          These are largely non-recoverable without business stabilisation at the customer end.
+        </div>
+      </div>
+
+      <div class="trend-card amber">
+        <div class="trend-icon">📦</div>
+        <div class="trend-title">Shelfware as the Leading At-Risk Indicator</div>
+        <div class="trend-body">
+          Across all at-risk accounts with ≥30% shelf utilisation, combined ATR exposure is <strong>${fmtAtr(shelfAtr)}</strong>.
+          Hero MotoCorp (56%), Ola Electric (38%), TVS Motor (34%), Lifestyle International (50%), and Hyundai Autoever (100% non-core)
+          show <strong>shelfware as a reliable leading indicator of RED/AMBER status</strong>.
+          Proactive adoption plays are needed for Q3 or these convert to confirmed attritions.
+        </div>
+      </div>
+
+      <div class="trend-card warn">
+        <div class="trend-icon">🔄</div>
+        <div class="trend-title">Heroku EOS: Structural TMTHRE Exposure</div>
+        <div class="trend-body">
+          Heroku end-of-service is creating contractual risk across multiple TMTHRE accounts including
+          <strong>Alembic Pharmaceuticals</strong> (Core + Add-Ons shelf) and
+          <strong>Honda Motorcycle &amp; Scooter</strong> (FINS, AMBER).
+          Total flagged exposure: <strong>~${fmtAtr(herokuAtr)}</strong>.
+          A coordinated migration play to Salesforce Platform or Hyperforce is needed to retain this ATR.
+        </div>
+      </div>
+
+      <div class="trend-card amber">
+        <div class="trend-icon">💬</div>
+        <div class="trend-title">WhatsApp Pricing Friction in CMI Non-Core</div>
+        <div class="trend-body">
+          Lifestyle International ($331K) and BIBA Fashion ($282K) are both AMBER under Financial &amp; Contractual risk
+          directly citing <strong>WhatsApp pricing as the attrition driver</strong> — combined <strong>$613K</strong> at risk.
+          This is a pricing/packaging issue requiring a commercial fix, not a product or adoption issue.
+          Maruti Suzuki ($1.3M, MuleSoft) compounds CMI Non-Core financial risk.
+        </div>
+      </div>
+
+      <div class="trend-card info">
+        <div class="trend-icon">🏛️</div>
+        <div class="trend-title">Government Contracts: Structural One-Year Risk</div>
+        <div class="trend-body">
+          Three TMTHRE Non-Core accounts — GSTN ($315K), CAG ($184K), DoIT&amp;C Rajasthan ($133K, RED) —
+          are flagged with <strong>government contract structures that do not support multi-year renewal</strong>.
+          Combined ATR: <strong>${fmtAtr(govtAtr||315473+184326+132718)}</strong>.
+          These require a separate public-sector engagement strategy with longer sales cycles.
+        </div>
+      </div>
+
+      <div class="trend-card good">
+        <div class="trend-icon">✅</div>
+        <div class="trend-title">FINS: Strong Foundation, Two Confirmed Losses</div>
+        <div class="trend-body">
+          FINS holds the portfolio's highest no-risk concentration at <strong>${fmtPct((segMap['FINS']?.attrition_groups.find(g=>g.reason==='No Risk')?.atr||0)/(segMap['FINS']?.totalAtr||1))}</strong>
+          combined. Kotak ($6.7M), L&amp;T Finance, Yes Bank, and Axis Bank show deep product integration.
+          The two confirmed losses — <strong>HDFC Bank (in-house build)</strong> and <strong>Pine Labs (competitive loss)</strong> —
+          are isolated and should be treated as competitive intelligence, not a FINS trend.
+        </div>
+      </div>
+
+      <div class="trend-card info">
+        <div class="trend-icon">📊</div>
+        <div class="trend-title">Tableau as Non-Core Growth Vehicle</div>
+        <div class="trend-body">
+          Tableau dominates the Non-Core tab — IDFC FIRST ($1.3M), Jio Platforms ($2.0M combined),
+          GSTN, CAG, multiple FINS accounts.
+          <strong>Tableau is the entry product for non-core expansion</strong>, but renewal risk is highest
+          for standalone Tableau accounts with no adjacent cloud attach. Cross-sell motions
+          (MuleSoft, MC) in these accounts would significantly strengthen renewal health.
+        </div>
+      </div>
+
+      <div class="trend-card good">
+        <div class="trend-icon">🚀</div>
+        <div class="trend-title">TMTHRE Core: Best Breadth-to-Risk Ratio</div>
+        <div class="trend-body">
+          TMTHRE Core has 38 accounts at $16.3M with <strong>${fmtPct(12028737/16288026)} no-risk</strong>.
+          Tata Communications ($2.0M), InMobi ($1.3M), EXL ($836K), Whatfix ($790K)
+          show healthy adoption across Core SFA. Financial &amp; Contractual risk ($2.6M, 8 accounts)
+          is manageable and largely Heroku-related — addressable with a platform migration offer.
+        </div>
+      </div>
+
+      <div class="trend-card amber">
+        <div class="trend-icon">⚡</div>
+        <div class="trend-title">Q1 FY28 Close Urgency (Feb–May 2027)</div>
+        <div class="trend-body">
+          A significant volume of at-risk accounts close in <strong>Feb–May 2027</strong>:
+          Pine Labs (May), Ola Electric (Apr), Hero MotoCorp (Apr), HDFC Bank (Jul),
+          Bandhan Bank (Jun), UNext (Mar), Wingify (Feb).
+          <strong>These are 90-day or sub-90-day deals</strong> — executive escalation and CSM
+          acceleration are needed now to protect or mitigate this cohort before the window closes.
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
+const p0 = document.getElementById('pane-0');
 const p1 = document.getElementById('pane-1');
 const p2 = document.getElementById('pane-2');
+renderExecSummary(p0);
 renderTab(TAB1, p1, '≥$200K');
 renderTab(TAB2, p2, '≥$100K');
 
