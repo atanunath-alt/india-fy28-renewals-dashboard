@@ -370,6 +370,45 @@ body {
 .close-cell { color: var(--text-2); white-space: nowrap; }
 .comments-cell { color: var(--text-2); font-size: 11.5px; max-width: 260px; line-height: 1.4; }
 
+/* ─── PRODUCT BREAKDOWN ─── */
+.product-bar-section {
+  padding: 14px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f5f5f3;
+}
+.product-bar-section .bar-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 10px; }
+.product-tiles {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.product-tile {
+  border-radius: 6px; padding: 6px 10px 5px;
+  min-width: 80px; border: 1px solid transparent;
+}
+.product-tile .pt-name { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .85; margin-bottom: 2px; }
+.product-tile .pt-atr  { font-size: 13px; font-weight: 700; line-height: 1; }
+.product-tile .pt-pct  { font-size: 10px; opacity: .75; margin-top: 1px; }
+.cloud-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+  color: #fff;
+}
+.cloud-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.7); }
+.product-summary-strip {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 16px 24px; background: var(--card);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+.ps-tile {
+  display: flex; flex-direction: column;
+  padding: 10px 14px; border-radius: 7px; min-width: 100px;
+}
+.ps-tile .ps-name { font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; opacity: .8; margin-bottom: 3px; }
+.ps-tile .ps-atr  { font-size: 15px; font-weight: 700; }
+.ps-tile .ps-pct  { font-size: 10px; opacity: .7; margin-top: 1px; }
+.reason-cloud-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; padding: 0 20px 10px; }
+
 /* ─── NORISK HIGHLIGHT ─── */
 .reason-group.norisk .reason-header {
   background: #f0faf5;
@@ -571,6 +610,37 @@ const REASON_SHORT = {
 const SEG_COLOR = { FINS:'#2a78d6', CMI:'#1baf7a', TMTHRE:'#4a3aa7', ESMB:'#eb6834' };
 const SEG_LABEL = { FINS:'Financial Services', CMI:'Consumer & Industrial', TMTHRE:'Tech, Media, Telecom & Healthcare', ESMB:'Enterprise SMB' };
 
+const CLOUD_COLOR = {
+  'Core SFA':   '#2a78d6',
+  'Mktg Cloud': '#e87ba4',
+  'Tableau':    '#eb6834',
+  'MuleSoft':   '#4a3aa7',
+  'Slack':      '#1baf7a',
+  'Commerce':   '#eda100',
+  'Data Cloud': '#008300',
+  'Other':      '#c3c2b7'
+};
+const CLOUD_ORDER = ['Core SFA','Tableau','Mktg Cloud','MuleSoft','Slack','Commerce','Data Cloud','Other'];
+function normalizeCloud(c) {
+  if (!c) return 'Other';
+  if (c.startsWith('Core')) return 'Core SFA';
+  if (c === 'Tableau') return 'Tableau';
+  if (c === 'MuleSoft') return 'MuleSoft';
+  if (c.includes('Mktg') || c === 'MC') return 'Mktg Cloud';
+  if (c === 'Slack') return 'Slack';
+  if (c.includes('Commerce') || c.includes('B2B')) return 'Commerce';
+  if (c.includes('Data')) return 'Data Cloud';
+  return 'Other';
+}
+function cloudBreakdown(accounts) {
+  const map = {};
+  accounts.forEach(a => {
+    const k = normalizeCloud(a.cloud);
+    map[k] = (map[k]||0) + a.atr;
+  });
+  return map;
+}
+
 function fmtAtr(v) {
   if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
   if (v >= 1e3) return '$' + Math.round(v/1e3) + 'K';
@@ -612,6 +682,21 @@ function renderTab(data, pane, minLabel) {
   const atRiskAtr = totalAtr - noRiskAtr;
   const atRiskCount = totalCount - noRiskCount;
 
+  // Tab-level cloud breakdown
+  const tabAllAccounts = data.flatMap(seg => seg.attrition_groups.flatMap(g => g.accounts));
+  const tabCloud = cloudBreakdown(tabAllAccounts);
+  const tabCloudTiles = CLOUD_ORDER
+    .filter(c => tabCloud[c])
+    .map(c => {
+      const col = CLOUD_COLOR[c];
+      const pct = fmtPct(tabCloud[c]/totalAtr);
+      return `<div class="ps-tile" style="background:${col}18;border:1px solid ${col}35;">
+        <div class="ps-name" style="color:${col}">${c}</div>
+        <div class="ps-atr" style="color:${col}">${fmtAtr(tabCloud[c])}</div>
+        <div class="ps-pct" style="color:${col}">${pct} of portfolio</div>
+      </div>`;
+    }).join('');
+
   let html = `
   <div class="summary-strip">
     <div class="kpi-tile">
@@ -639,6 +724,10 @@ function renderTab(data, pane, minLabel) {
       <div class="kpi-value">${data.length}</div>
       <div class="kpi-sub">${data.map(d=>d.segment).join(' · ')}</div>
     </div>
+  </div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden;">
+    <div style="padding:10px 20px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);">Product Mix — ATR by Cloud</div>
+    <div class="product-summary-strip">${tabCloudTiles}</div>
   </div>`;
 
   data.forEach((seg, si) => {
@@ -647,7 +736,7 @@ function renderTab(data, pane, minLabel) {
     const color = SEG_COLOR[seg.segment] || '#2a78d6';
     const cardId = `seg-${pane.id}-${si}`;
 
-    // Stacked bar
+    // Stacked bar (by attrition reason)
     const barSegs = seg.attrition_groups.map(g => {
       const w = (g.atr / seg.total_atr * 100).toFixed(2);
       const c = REASON_COLOR[g.reason] || '#c3c2b7';
@@ -659,7 +748,7 @@ function renderTab(data, pane, minLabel) {
       </div>`;
     }).join('');
 
-    // Legend
+    // Legend (attrition reason)
     const legendItems = seg.attrition_groups.map(g => {
       const c = REASON_COLOR[g.reason] || '#c3c2b7';
       return `<div class="legend-item">
@@ -667,6 +756,33 @@ function renderTab(data, pane, minLabel) {
         ${REASON_SHORT[g.reason]} <span class="legend-val">${fmtAtr(g.atr)}</span>
       </div>`;
     }).join('');
+
+    // Product bar (by cloud) for this segment
+    const segAllAccounts = seg.attrition_groups.flatMap(g => g.accounts);
+    const segCloud = cloudBreakdown(segAllAccounts);
+    const productBarSegs = CLOUD_ORDER
+      .filter(c => segCloud[c])
+      .map(c => {
+        const w = (segCloud[c]/seg.total_atr*100).toFixed(2);
+        const col = CLOUD_COLOR[c];
+        const lbl = w > 9 ? c : '';
+        return `<div class="bar-seg" style="width:${w}%;background:${col};"
+          onmouseenter="showTip(event,'<div class=\\'tt-reason\\'>${c}</div><div class=\\'tt-val\\'>${fmtAtr(segCloud[c])} · ${fmtPct(segCloud[c]/seg.total_atr)}</div>')"
+          onmouseleave="hideTip()">
+          ${lbl ? `<span class="bar-label">${lbl}</span>` : ''}
+        </div>`;
+      }).join('');
+
+    const productTiles = CLOUD_ORDER
+      .filter(c => segCloud[c])
+      .map(c => {
+        const col = CLOUD_COLOR[c];
+        return `<div class="product-tile" style="background:${col}15;border-color:${col}30;">
+          <div class="pt-name" style="color:${col}">${c}</div>
+          <div class="pt-atr" style="color:${col}">${fmtAtr(segCloud[c])}</div>
+          <div class="pt-pct" style="color:${col}">${fmtPct(segCloud[c]/seg.total_atr)}</div>
+        </div>`;
+      }).join('');
 
     // Reason groups
     const reasonGroups = seg.attrition_groups.map((g, gi) => {
@@ -677,13 +793,28 @@ function renderTab(data, pane, minLabel) {
         .map(([k,v]) => `<span class="rag-badge ${k==='N/A'?'NA':k}">${k} ×${v}</span>`)
         .join('');
 
+      // Cloud chips for this reason group
+      const gCloud = cloudBreakdown(g.accounts);
+      const cloudChips = CLOUD_ORDER
+        .filter(c => gCloud[c])
+        .map(c => {
+          const col = CLOUD_COLOR[c];
+          return `<span class="cloud-chip" style="background:${col};"
+            onmouseenter="showTip(event,'<div class=\\'tt-reason\\'>${c}</div><div class=\\'tt-val\\'>${fmtAtr(gCloud[c])} · ${fmtPct(gCloud[c]/g.atr)}</div>')"
+            onmouseleave="hideTip()">
+            <span class="cloud-dot"></span>${c}
+          </span>`;
+        }).join('');
+
       // Account rows
       const rows = g.accounts.map(a => {
         const shelf = a.shelf_pct > 0 ? `<span class="${shelfClass(a.shelf_pct)}">${fmtPct(a.shelf_pct)}</span>` : '<span style="color:var(--text-muted)">—</span>';
         const ragBadge = a.rag ? `<span class="rag-badge ${a.rag}" style="font-size:9.5px">${a.rag}</span>` : '';
+        const cn = normalizeCloud(a.cloud);
+        const ccol = CLOUD_COLOR[cn] || '#999';
         return `<tr>
           <td><div class="acct-name">${a.name}</div></td>
-          <td><span class="acct-cloud">${a.cloud}</span></td>
+          <td><span class="cloud-chip" style="background:${ccol};font-size:9.5px">${cn}</span>${a.cloud && a.cloud !== cn && !a.cloud.startsWith('Core') ? `<br><span style="font-size:10px;color:var(--text-muted)">${a.cloud}</span>` : ''}</td>
           <td class="atr-cell">${fmtAtr(a.atr)}</td>
           <td class="shelf-cell">${shelf}</td>
           <td class="close-cell">${a.close||'—'}</td>
@@ -697,6 +828,7 @@ function renderTab(data, pane, minLabel) {
           <div class="reason-dot" style="background:${REASON_COLOR[g.reason]||'#ccc'}"></div>
           <div class="reason-name">${g.reason}</div>
           <div class="reason-meta">
+            <div style="display:flex;gap:4px;flex-wrap:wrap">${cloudChips}</div>
             <div class="rag-badges">${ragBadges}</div>
             <span class="reason-count">${g.count} acct${g.count>1?'s':''}</span>
             <div class="reason-atr">${fmtAtr(g.atr)}</div>
@@ -707,7 +839,7 @@ function renderTab(data, pane, minLabel) {
           <table class="acct-table">
             <thead><tr>
               <th>Account</th>
-              <th>Cloud</th>
+              <th>Cloud / Product</th>
               <th>ATR (USD)</th>
               <th>Shelf %</th>
               <th>Close</th>
@@ -740,6 +872,9 @@ function renderTab(data, pane, minLabel) {
             <div class="val" style="color:${noRiskPct>=0.7?'var(--good)':noRiskPct>=0.5?'var(--text-1)':'var(--critical)'}">${fmtPct(noRiskPct)}</div>
             <div class="lbl">No Risk</div>
           </div>
+          <div class="seg-kpi" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:160px;">
+            ${CLOUD_ORDER.filter(c=>segCloud[c]).slice(0,4).map(c=>`<span class="cloud-chip" style="background:${CLOUD_COLOR[c]};font-size:9px">${c}</span>`).join('')}
+          </div>
         </div>
         <span class="seg-chevron">▾</span>
       </div>
@@ -748,6 +883,11 @@ function renderTab(data, pane, minLabel) {
           <div class="bar-title">ATR by Attrition Reason</div>
           <div class="stacked-bar">${barSegs}</div>
           <div class="bar-legend">${legendItems}</div>
+        </div>
+        <div class="product-bar-section">
+          <div class="bar-title">ATR by Cloud / Product</div>
+          <div class="stacked-bar">${productBarSegs}</div>
+          <div class="product-tiles">${productTiles}</div>
         </div>
         ${reasonGroups}
       </div>
